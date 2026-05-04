@@ -1,0 +1,153 @@
+export const SITE_CONFIG = {
+  name: 'I-Therm',
+  fullName: 'Innovative Instruments & Controls LLP',
+  brandName: 'Itherm Precision Unrivalled',
+  tagline: 'Foremost Manufacturer of Process Control & Measuring Instruments',
+  description:
+    'Innovative Instruments & Controls LLP (I-Therm) manufactures precision temperature controllers, timers, counters, data loggers, humidity controllers, and autoclave controllers for industrial process control since 1996.',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://itherm.co.in',
+  phone1: '+91 85919 39916',
+  phone2: '+91 85919 39917',
+  phone3: '+91 86558 32205',
+  phone: '+91 85919 39916',
+  email: 'info@innovative-instruments.in',
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '918591939916',
+  addressLine1: 'Unit No. 101-105, First Floor, Patel Industrial Estate No. 5,',
+  addressLine2: 'Gavraipada, Behind Range Office, Vasai (East),',
+  addressLine3: 'Palghar: 401208, Maharashtra, India',
+  address: 'Unit No. 101-105, Patel Industrial Estate No. 5, Vasai (East), Palghar 401208, Maharashtra',
+  foundedYear: 1996,
+  experience: new Date().getFullYear() - 1996,
+  ogImage: '/images/og-default.jpg',
+  youtubeHandle: 'i-therm',
+}
+
+export const PRODUCT_CATEGORIES = [
+  {
+    slug: 'temperature-controllers',
+    name: 'Temperature Controllers',
+    description: 'PID & ON/OFF controllers with selectable sensor input (TC & RTD), auto-tune, dual display, and RS485 communication.',
+    count: '20+ models',
+    models: ['AI-5442', 'AI-5742', 'AI-5942', 'AI-7481', 'AI-7482', 'AI-7782', 'AI-7981', 'AI-7982'],
+  },
+  {
+    slug: 'timers-counters',
+    name: 'Timers & Counters',
+    description: 'Digital preset counters (I-Count brand) in multiple sizes. Single and double set point variants.',
+    count: '10+ models',
+    models: ['KCN-444', 'KCN-448', 'KCN-664', 'KCN-668', 'KCN-774', 'KCN-778', 'KCN-884', 'KCN-888', 'KCN-994', 'KCN-998'],
+  },
+  {
+    slug: 'humidity-controllers',
+    name: 'Humidity Controllers',
+    description: 'Humi-Temp series — dual channel PID control for temperature and relative humidity with compressor protection.',
+    count: '3 models',
+    models: ['Humi-Temp', 'RHTC-44'],
+  },
+  {
+    slug: 'data-loggers',
+    name: 'Data Loggers',
+    description: 'Multi-channel data loggers with USB connectivity for pharmaceutical, food, and autoclave validation.',
+    count: '3 models',
+    models: ['AI-Logger', 'AI-USB-Logger', 'VA-Logger'],
+  },
+  {
+    slug: 'ult-controllers',
+    name: 'ULT Controllers',
+    description: 'Ultra-low temperature controllers for freezers, cryo-storage, and sub-zero industrial applications.',
+    count: 'Multiple models',
+    models: ['ULT Series'],
+  },
+  {
+    slug: 'autoclave-controllers',
+    name: 'Autoclave Controllers',
+    description: 'Specialized process controllers for autoclave sterilization cycle management and validation.',
+    count: 'Custom',
+    models: ['Autoclave Series'],
+  },
+  {
+    slug: 'process-indicators',
+    name: 'Process Indicators',
+    description: 'Multi-input process indicators for temperature, pressure, flow, and custom engineering units.',
+    count: 'Multiple models',
+    models: ['AI Series'],
+  },
+  {
+    slug: 'time-totalizers',
+    name: 'Time Totalizers',
+    description: 'Elapsed time and run-hour totalizer meters for machine maintenance scheduling.',
+    count: 'Multiple models',
+    models: ['TT Series'],
+  },
+] as const
+
+export const FEATURED_PRODUCTS = [
+  {
+    model: 'AI-7982',
+    name: 'Temperature Controller AI-7982',
+    size: '96×96 MM',
+    type: '4 Digit Dual Row',
+    description: 'Advanced PID temperature controller with dual display, auto-tune, and multiple sensor inputs.',
+    specs: ['96×96 MM panel size', 'TC & RTD input', 'PID / ON-OFF control', 'RS485 Modbus', '90–270VAC supply'],
+    slug: 'ai-7982',
+    category: 'temperature-controllers',
+    badge: 'Popular',
+    image: 'https://itherm.co.in/wp-content/uploads/2025/01/2-PID-Temp-Contro.jpg',
+  },
+  {
+    model: 'AI-5742',
+    name: 'Temperature Controller AI-5742',
+    size: '72×72 MM',
+    type: 'Single Row, Two Output',
+    description: 'Compact PID/ON-OFF controller with selectable J, K, R, S thermocouple and Pt-100 RTD input.',
+    specs: ['72×72 MM panel size', 'J, K, R, S TC + Pt-100 RTD', 'Relay + SSR Drive output', '125ms sampling', '90–270VAC supply'],
+    slug: 'ai-5742',
+    category: 'temperature-controllers',
+    badge: null,
+    image: 'https://itherm.co.in/wp-content/uploads/2025/01/1-Digital-Temp-Contro.jpg',
+  },
+  {
+    model: 'Humi-Temp',
+    name: 'Humidity & Temperature Controller',
+    size: '96×96 MM',
+    type: '4 Digit Dual Row',
+    description: 'Dual PID control for both temperature and relative humidity with compressor time delay protection.',
+    specs: ['96×96 MM panel size', 'RTD + %rH input', 'PID or ON-OFF for T & rH', 'Compressor delay protection', 'Low water alert'],
+    slug: 'humi-temp',
+    category: 'humidity-controllers',
+    badge: 'Specialty',
+    image: 'https://itherm.co.in/wp-content/uploads/2025/01/7-Humidity-Controller.jpg',
+  },
+  {
+    model: 'KCN-888',
+    name: 'Digital Counter KCN-888',
+    size: '96×96 MM',
+    type: 'Dual Set Point Counter',
+    description: 'I-Count brand 6-digit preset counter with dual set point and multiple input modes.',
+    specs: ['96×96 MM panel size', 'Double set point', '6 digit display', 'Count up / Count down', 'Batch counting'],
+    slug: 'kcn-888',
+    category: 'timers-counters',
+    badge: null,
+    image: 'https://itherm.co.in/wp-content/uploads/2024/12/Cx-928-1-300x300.jpg',
+  },
+] as const
+
+export const INDUSTRIES = [
+  { name: 'Pharmaceutical', icon: '💊', slug: 'pharmaceutical', desc: 'Autoclave control, incubators, stability chambers' },
+  { name: 'Food Processing', icon: '🥫', slug: 'food-processing', desc: 'Retorts, ovens, pasteurization, cold storage' },
+  { name: 'Textile Dyeing', icon: '🧵', slug: 'textile', desc: 'Dye bath temperature control and batch timing' },
+  { name: 'Plastics & Rubber', icon: '🏭', slug: 'plastics', desc: 'Injection moulding, extrusion, blow moulding' },
+  { name: 'Chemical Plants', icon: '⚗️', slug: 'chemical', desc: 'Reactors, distillation, batch processing' },
+  { name: 'Furnaces & Ovens', icon: '🔥', slug: 'furnaces-ovens', desc: 'Heat treatment, annealing, industrial heating' },
+  { name: 'Medical & Laboratory', icon: '🔬', slug: 'medical-lab', desc: 'Environmental chambers, test equipment' },
+  { name: 'General Automation', icon: '⚙️', slug: 'automation', desc: 'PLC integration, SCADA, process automation' },
+] as const
+
+export const STATS = [
+  { value: '28+', label: 'Years of Experience' },
+  { value: '50+', label: 'Product Models' },
+  { value: '8+', label: 'Product Categories' },
+  { value: 'Pan-India', label: 'Distribution' },
+] as const
+
+export const PRODUCT_SIZES = ['48×48 MM', '48×96 MM', '72×72 MM', '96×48 MM', '96×96 MM'] as const

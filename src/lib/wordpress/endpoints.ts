@@ -1,0 +1,16 @@
+export const WP_ENDPOINTS = {
+  PRODUCTS: '/products',
+  PRODUCT_CATEGORIES: '/product-categories',
+  SOLUTIONS: '/solutions',
+  INDUSTRIES: '/industries',
+  CASE_STUDIES: '/case-studies',
+  TESTIMONIALS: '/testimonials',
+  CLIENT_LOGOS: '/client-logos',
+  FAQS: '/faqs',
+  CATALOGS: '/catalogs',
+  GUIDES: '/guides',
+  POSTS: '/posts',
+  PAGES: '/pages',
+  CATEGORIES: '/categories',
+  MEDIA: '/media',
+} as const
