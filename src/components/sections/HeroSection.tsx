@@ -155,21 +155,21 @@ export function HeroSection() {
       {/* Prev / Next arrows */}
       <button
         onClick={prev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-brand-orange hover:border-brand-orange transition-all"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-brand-orange hover:border-brand-orange transition-all"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
       <button
         onClick={next}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-brand-orange hover:border-brand-orange transition-all"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-brand-orange hover:border-brand-orange transition-all"
         aria-label="Next slide"
       >
         <ChevronRight className="h-5 w-5" />
       </button>
 
       {/* Dot indicators */}
-      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      <div className="absolute bottom-[15px] md:bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-2">
         {slides.map((_, i) => (
           <button
             key={i}

@@ -167,6 +167,10 @@ button {
     top: 92%;
   }
 
+  .banner-heading-font{
+    line-height: 50px;
+  }
+
   .slider-inner-space {
     padding: 5rem 2.5rem;
   }
