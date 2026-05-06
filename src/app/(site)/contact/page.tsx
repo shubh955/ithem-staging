@@ -119,7 +119,7 @@ export default function ContactPage() {
             <div className="lg:col-span-7">
               <div className="rounded-3xl bg-white p-6 md:p-10 shadow-xl border border-gray-50">
                 <h2 className="text-xl font-bold text-dark mb-1">Send an Inquiry</h2>
-                <p className="text-sm text-gray-500 mb-8">Fill out the form and we'll get back to you within 24 hours.</p>
+                <p className="text-sm text-gray-500 mb-8">Fill out the form and we&apos;ll get back to you within 24 hours.</p>
                 
                 <form className="space-y-5">
                   <div className="grid gap-5 md:grid-cols-2">

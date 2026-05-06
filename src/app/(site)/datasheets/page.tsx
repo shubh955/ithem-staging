@@ -292,7 +292,7 @@ export default function DatasheetsPage() {
       {/* Need Help CTA */}
       <section className="bg-gray-50 py-20 lg:py-32">
         <div className="mx-auto max-w-4xl px-4 text-center">
-          <h2 className="text-4xl font-bold text-dark mb-6">Can't find the data sheet you need?</h2>
+          <h2 className="text-4xl font-bold text-dark mb-6">Can&apos;t find the data sheet you need?</h2>
           <p className="text-xl text-gray-600 mb-10 leading-relaxed">Our technical team can provide you with the exact specifications for any of our custom process control solutions.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
