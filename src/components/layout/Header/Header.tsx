@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, Phone, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { NAV_ITEMS } from './nav.config'
+import { NAV_ITEMS, type NavChild } from './nav.config'
 import { SITE_CONFIG } from '@/lib/utils/constants'
 
 export function Header() {
@@ -13,6 +13,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null)
+  const [hoveredItem, setHoveredItem] = useState<NavChild | null>(null)
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 80)
@@ -44,7 +45,7 @@ export function Header() {
           </div>
         )} */}
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 desktop-padd-0 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0">
             <Image
@@ -58,17 +59,20 @@ export function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden items-center gap-0.5 lg:flex">
+          <nav className="hidden items-center gap-0.5 lg:flex self-stretch">
             {NAV_ITEMS.map((item) => (
               <div
                 key={item.label}
-                className="relative"
+                className="flex items-center h-full padd-control"
                 onMouseEnter={() => item.children && setActiveMenu(item.label)}
                 onMouseLeave={() => setActiveMenu(null)}
               >
                 {item.href ? (
                   <Link href={item.href} className={navLinkClass}>
                     {item.label}
+                    {item.children && (
+                      <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', activeMenu === item.label && 'rotate-180')} />
+                    )}
                   </Link>
                 ) : (
                   <button className={navLinkClass}>
@@ -80,37 +84,76 @@ export function Header() {
                 {/* Mega Menu — always white */}
                 {item.children && activeMenu === item.label && (
                   <div
-                    className="absolute left-0 top-full z-50 mt-2 min-w-[480px] rounded-xl border border-gray-100 bg-white p-5 shadow-2xl"
+                    className="absolute left-0 right-0 top-[calc(100%-9px)] z-50 bg-white border-b border-gray-100 shadow-2xl overflow-hidden"
                     onMouseEnter={() => setActiveMenu(item.label)}
-                    onMouseLeave={() => setActiveMenu(null)}
+                    onMouseLeave={() => {
+                      setActiveMenu(null)
+                      setHoveredItem(null)
+                    }}
                   >
-                    <div className={cn('grid gap-6', item.children.length > 2 ? 'grid-cols-3' : 'grid-cols-2')}>
-                      {item.children.map((col, ci) => (
-                        <div key={ci}>
-                          {col.heading && (
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-brand-orange">
-                              {col.heading}
+                    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                      <div className="flex gap-12">
+                        {/* Left: Nav Links */}
+                        <div className="flex-1 grid gap-y-6 gap-x-10 grid-cols-2">
+                        {item.children.map((col, ci) => (
+                          <div key={ci}>
+                            {col.heading && (
+                              <p className="mb-3 text-[14px] font-bold uppercase tracking-[0.15em] text-brand-orange border-b border-brand-orange/10 pb-1.5">
+                                {col.heading}
+                              </p>
+                            )}
+                            <ul className="space-y-1">
+                              {col.items.map((child) => (
+                                <li key={child.href}>
+                                  <Link
+                                    href={child.href}
+                                    className="group/link block rounded-xl px-2.5 py-1.5 transition-all hover:bg-orange-50"
+                                    onMouseEnter={() => setHoveredItem(child)}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm font-semibold text-gray-700 group-hover/link:text-brand-orange">
+                                        {child.label}
+                                      </span>
+                                      <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
+                                    </div>
+                                    {child.description && (
+                                      <span className="mt-0.5 block text-xs text-gray-400 group-hover/link:text-gray-500">
+                                        {child.description}
+                                      </span>
+                                    )}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right: Preview Card */}
+                      <div className="w-[280px] shrink-0 border-l border-gray-100 pl-12">
+                        <div className="sticky top-0">
+                          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-lg bg-gray-50">
+                            <Image
+                              src={hoveredItem?.image || item.defaultImage || '/logo.png'}
+                              alt={hoveredItem?.label || item.label}
+                              fill
+                              className="object-cover transition-all duration-700 hover:scale-110"
+                              sizes="300px"
+                            />
+                          </div>
+                          <div className="mt-5">
+                            <h4 className="text-base font-bold text-dark">
+                              {hoveredItem?.label || item.label}
+                            </h4>
+                            <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+                              {hoveredItem?.description || 'Innovative Instruments & Controls LLP (I-Therm) — foremost manufacturer of process control instruments since 1996.'}
                             </p>
-                          )}
-                          <ul className="space-y-0.5">
-                            {col.items.map((child) => (
-                              <li key={child.href}>
-                                <Link
-                                  href={child.href}
-                                  className="block rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-orange-50 hover:text-brand-orange transition-colors"
-                                >
-                                  <span className="font-medium">{child.label}</span>
-                                  {child.description && (
-                                    <span className="block text-xs text-gray-400">{child.description}</span>
-                                  )}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
+                          </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
+                </div>
                 )}
               </div>
             ))}

@@ -105,6 +105,15 @@ a {
   background-color: white;
 }
 
+.padd-control{
+  padding: 20px 0;
+  z-index: 999;
+}
+
+.desktop-padd-0{
+  padding: 0 !important;
+}
+
 /* Better button defaults */
 button {
   cursor: pointer;
@@ -163,11 +172,20 @@ button {
     left: 68%;
   }
 
+  .desktop-padd-0 {
+    padding: 10px 20px !important;
+  }
+
   .next-btn{
     top: 92%;
   }
 
   .slider-inner-space {
     padding: 5rem 2.5rem;
+  }
+
+  p {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
   }
 }

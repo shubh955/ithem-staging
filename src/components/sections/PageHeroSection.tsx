@@ -9,7 +9,7 @@ interface PageHeroSectionProps {
 
 export function PageHeroSection({ title, description, breadcrumbs, tag }: PageHeroSectionProps) {
   return (
-    <section className="relative overflow-hidden bg-dark py-16 md:py-20">
+    <section className="relative overflow-hidden bg-dark pt-[100px] pb-[40px]">
       <div className="absolute inset-0 opacity-5">
         <div
           className="absolute inset-0"
@@ -26,7 +26,7 @@ export function PageHeroSection({ title, description, breadcrumbs, tag }: PageHe
           <Breadcrumb items={breadcrumbs} className="mb-5" light />
         )}
         {tag && (
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-brand-orange">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest pt-[20px] text-brand-orange ">
             {tag}
           </p>
         )}
