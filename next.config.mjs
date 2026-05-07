@@ -16,6 +16,11 @@ const nextConfig = {
         hostname: "itherm.co.in",
         pathname: "/wp-content/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "backend.itherm.co.in",
+        pathname: "/wp-content/uploads/**",
+      },
     ],
     formats: ["image/avif", "image/webp"],
   },

@@ -20,6 +20,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Products',
+    href: '/products',
     defaultImage: 'https://itherm.co.in/wp-content/uploads/2025/01/2-PID-Temp-Contro.jpg',
     children: [
       {

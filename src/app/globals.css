@@ -105,9 +105,9 @@ a {
   background-color: white;
 }
 
-.padd-control{
-  padding: 20px 0;
-  z-index: 999;
+
+.padd-control .desktop-menu-links, .padd-control .desktop-menu-links{
+  padding: 28px 10px 30px 10px;
 }
 
 .desktop-padd-0{
@@ -188,4 +188,19 @@ button {
     font-size: 16px !important;
     line-height: 1.6 !important;
   }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
 }
