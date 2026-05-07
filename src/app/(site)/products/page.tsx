@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { ProductListing } from '@/components/sections/ProductListing'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Loader2 } from 'lucide-react'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   title: 'Products',
@@ -11,7 +12,9 @@ export const metadata: Metadata = {
 export default function ProductsPage() {
   return (
     <div className="pt-24 bg-white">
-      <ProductListing />
+      <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center"><Loader2 className="animate-spin text-brand-orange h-8 w-8" /></div>}>
+        <ProductListing />
+      </Suspense>
 
       {/* Sizes Banner */}
       <section className="bg-dark py-12">
