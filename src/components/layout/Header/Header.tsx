@@ -298,7 +298,7 @@ export function Header() {
                         </div>
                       ) : (
                         <div className="p-8 text-center">
-                          <p className="text-sm font-medium text-gray-500">No products found for "{searchQuery}"</p>
+                          <p className="text-sm font-medium text-gray-500">No products found for &quot;{searchQuery}&quot;</p>
                           <div className="mt-6 border-t border-gray-100 pt-6">
                             <p className="mb-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left px-1">Recommended Products</p>
                             <div className="space-y-1">
