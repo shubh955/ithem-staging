@@ -9,7 +9,7 @@ interface PageHeroSectionProps {
 
 export function PageHeroSection({ title, description, breadcrumbs, tag }: PageHeroSectionProps) {
   return (
-    <section className="relative overflow-hidden bg-dark pt-[100px] pb-[40px]">
+    <section className="relative overflow-hidden bg-dark pt-[160px] pb-[40px]">
       <div className="absolute inset-0 opacity-5">
         <div
           className="absolute inset-0"

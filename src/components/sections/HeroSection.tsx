@@ -49,7 +49,7 @@ export function HeroSection() {
 
 
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <section className="relative min-h-screen flex items-center pt-40 overflow-hidden">
 
       {/* ── Background slides ── */}
       {slides.map((slide, i) => (
@@ -183,13 +183,13 @@ export function HeroSection() {
       </div>
 
       {/* Floating Call Button */}
-      <a
+      {/* <a
         href={`tel:${SITE_CONFIG.phone1}`}
         className="absolute bottom-8 right-6 z-20 hidden items-center gap-2 rounded-full bg-brand-orange px-5 py-2.5 text-sm font-semibold text-white shadow-xl hover:bg-brand-orange-dark transition-colors lg:flex"
       >
         <Phone className="h-4 w-4" />
         {SITE_CONFIG.phone1}
-      </a>
+      </a> */}
     </section>
   )
 }

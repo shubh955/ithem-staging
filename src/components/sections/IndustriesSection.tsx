@@ -76,7 +76,7 @@ export function IndustriesSection() {
   }, [next])
 
   return (
-    <section className="bg-gray-50 py-20 md:py-28">
+    <section className="bg-gray-50 py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -88,12 +88,12 @@ export function IndustriesSection() {
               Industries We Serve
             </h2>
           </div>
-          <Link
+          {/* <Link
             href="/industries"
             className="inline-flex items-center gap-2 text-base font-semibold text-brand-orange hover:gap-3 transition-all"
           >
             All Industries <ArrowRight className="h-5 w-5" />
-          </Link>
+          </Link> */}
         </div>
 
         {/* Slider */}
@@ -126,12 +126,12 @@ export function IndustriesSection() {
                 <p className="max-w-xl text-base text-white/70 leading-relaxed mb-6">
                   {ind.description}
                 </p>
-                <Link
+                {/* <Link
                   href={`/industries/${ind.slug}`}
                   className="inline-flex items-center gap-2 rounded-lg bg-brand-orange px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-colors"
                 >
                   Learn More <ArrowRight className="h-4 w-4" />
-                </Link>
+                </Link> */}
               </div>
             </div>
           ))}

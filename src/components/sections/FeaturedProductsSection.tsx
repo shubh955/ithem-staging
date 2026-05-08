@@ -10,7 +10,7 @@ const badges: Record<string, { label: string; className: string }> = {
 
 export function FeaturedProductsSection() {
   return (
-    <section className="greey-background relative overflow-hidden bg-white py-20 md:py-28">
+    <section className="greey-background relative overflow-hidden bg-white py-16 md:py-20">
       {/* Subtle dotted grid background */}
       <div 
         className="absolute inset-0 opacity-[0.4]" 

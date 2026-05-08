@@ -6,7 +6,7 @@ export function CTASection() {
   const waUrl = `https://wa.me/${SITE_CONFIG.whatsapp}?text=${encodeURIComponent('Hi, I need help selecting a temperature controller for my application.')}`
 
   return (
-    <section className="relative overflow-hidden bg-dark py-20">
+    <section className="relative overflow-hidden bg-dark py-16 md:py-20">
       {/* Orange gradient accent */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-orange/20 via-transparent to-transparent" />
       <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-orange/20 blur-3xl" />

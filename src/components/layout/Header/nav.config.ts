@@ -18,6 +18,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/' },
   {
     label: 'Products',
     href: '/products',
@@ -78,32 +79,6 @@ export const NAV_ITEMS: NavItem[] = [
           { label: 'ULT Controllers', href: '/products/ult-controllers', description: 'Ultra-low temperature' },
           { label: 'Autoclave Controllers', href: '/products/autoclave-controllers', description: 'Sterilization cycle control' },
           { label: 'All Products', href: '/products' },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'Applications',
-    defaultImage: '/factory_precision_instruments_1778053952847.png',
-    children: [
-      {
-        heading: 'By Industry',
-        items: [
-          { label: 'Pharmaceutical', href: '/industries/pharmaceutical', image: '/rd_lab_precision_1778054176204.png' },
-          { label: 'Food Processing', href: '/industries/food-processing' },
-          { label: 'Textile Dyeing', href: '/industries/textile' },
-          { label: 'Plastics & Rubber', href: '/industries/plastics' },
-          { label: 'Furnaces & Ovens', href: '/industries/furnaces-ovens' },
-          { label: 'All Industries', href: '/industries' },
-        ],
-      },
-      {
-        heading: 'Application Specific',
-        items: [
-          { label: 'Autoclave / Sterilization', href: '/solutions/autoclave' },
-          { label: 'Humidity & Temperature', href: '/solutions/humidity-control' },
-          { label: 'Process Automation', href: '/solutions/process-automation' },
-          { label: 'Data Logging & Validation', href: '/solutions/data-logging' },
         ],
       },
     ],

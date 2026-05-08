@@ -29,7 +29,7 @@ function useCountUp(target: number, duration = 1800, start = false) {
 }
 
 function StatCard({ value, suffix, label, sub, started }: typeof stats[0] & { started: boolean }) {
-  const count = useCountUp(value, 1600, started)
+  const count = useCountUp(value, 3000, started)
   return (
     <div className="flex flex-col items-center text-center px-6 py-8 border-r border-white/10 last:border-r-0">
       <div className="text-4xl font-bold text-white sm:text-5xl font-inter mb-2">

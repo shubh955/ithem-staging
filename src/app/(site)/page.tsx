@@ -22,7 +22,7 @@ export default function HomePage() {
       <StatsSection />
       <ProductCategoriesSection />
       <FeaturedProductsSection />
-      <ApplicationsSection />
+      {/* <ApplicationsSection /> */}
       <WhyIThermSection />
       <IndustriesSection />
       <TestimonialsSection />

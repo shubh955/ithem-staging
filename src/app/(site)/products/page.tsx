@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ProductsPage() {
   return (
-    <div className="pt-24 bg-white">
+    <div className="pt-40 bg-white">
       <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center"><Loader2 className="animate-spin text-brand-orange h-8 w-8" /></div>}>
         <ProductListing />
       </Suspense>

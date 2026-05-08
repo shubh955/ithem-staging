@@ -1,192 +1,112 @@
 import Link from 'next/link'
-import { ArrowRight, Thermometer, Timer, Droplets, Database, Zap, FlaskConical, Activity, Clock } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 
 const categories = [
   {
     slug: 'temperature-controllers',
     name: 'Temperature Controllers',
-    description: 'PID & ON/OFF controllers in 48×48, 72×72, 96×96 MM sizes. Models: AI-5442, AI-5742, AI-5942, AI-7481, AI-7982 and more.',
-    icon: Thermometer,
-    count: '20+ models',
+    description: 'Precision PID & ON/OFF controllers for critical industrial processes. Trusted for accuracy since 1996.',
+    image: 'https://itherm.co.in/wp-content/uploads/2025/01/1-Digital-Temp-Contro.jpg',
     href: '/products/temperature-controllers',
-    highlight: true,
-    models: 'AI-5×42 · AI-7×8× Series',
-    colorClass: 'bg-red-50',
-    iconColor: 'text-red-500',
-    hoverBgClass: 'hover:bg-red-50/50',
-    hoverBorderClass: 'hover:border-red-200',
+    count: '24+ Models'
+  },
+  {
+    slug: 'application-specific',
+    name: 'Application Specific',
+    description: 'Dedicated instruments for Autoclaves, Pharmaceutical Validation, and Ultra-Low Temperature processes.',
+    image: 'https://itherm.co.in/wp-content/uploads/2025/01/2-PID-Temp-Contro.jpg',
+    href: '/products/specialty-instruments',
+    count: '12+ Models'
   },
   {
     slug: 'timers-counters',
     name: 'Timers & Counters',
-    description: 'I-Count brand digital preset counters. Single & double set point. Models: KCN-444 to KCN-998 in 5 panel sizes.',
-    icon: Timer,
-    count: '10 models',
+    description: 'Advanced digital timers and counters for precise machine automation and process cycle management.',
+    image: 'https://itherm.co.in/wp-content/uploads/2024/12/Cx-928-1-300x300.jpg',
     href: '/products/timers-counters',
-    highlight: false,
-    models: 'KCN-444 · KCN-888 · KCN-998',
-    colorClass: 'bg-blue-50',
-    iconColor: 'text-blue-500',
-    hoverBgClass: 'hover:bg-blue-50/50',
-    hoverBorderClass: 'hover:border-blue-200',
-  },
-  {
-    slug: 'humidity-controllers',
-    name: 'Humidity Controllers',
-    description: 'Humi-Temp series — dual PID control for temperature & %rH. Compressor delay, low water alert.',
-    icon: Droplets,
-    count: '2 models',
-    href: '/products/humidity-controllers',
-    highlight: false,
-    models: 'Humi-Temp · RHTC-44',
-    colorClass: 'bg-cyan-50',
-    iconColor: 'text-cyan-500',
-    hoverBgClass: 'hover:bg-cyan-50/50',
-    hoverBorderClass: 'hover:border-cyan-200',
-  },
-  {
-    slug: 'data-loggers',
-    name: 'Data Loggers',
-    description: 'Multi-channel data loggers for pharmaceutical validation. AI-Logger, USB Logger, and Autoclave VA-Logger.',
-    icon: Database,
-    count: '3 models',
-    href: '/products/data-loggers',
-    highlight: false,
-    models: 'AI-Logger · AI-USB-Logger · VA-Logger',
-    colorClass: 'bg-green-50',
-    iconColor: 'text-green-500',
-    hoverBgClass: 'hover:bg-green-50/50',
-    hoverBorderClass: 'hover:border-green-200',
-  },
-  {
-    slug: 'ult-controllers',
-    name: 'ULT Controllers',
-    description: 'Ultra-low temperature controllers for deep freezers, cryo-storage, and sub-zero industrial processes.',
-    icon: Zap,
-    count: 'Multiple models',
-    href: '/products/ult-controllers',
-    highlight: false,
-    models: 'ULT Series',
-    colorClass: 'bg-purple-50',
-    iconColor: 'text-purple-500',
-    hoverBgClass: 'hover:bg-purple-50/50',
-    hoverBorderClass: 'hover:border-purple-200',
-  },
-  {
-    slug: 'autoclave-controllers',
-    name: 'Autoclave Controllers',
-    description: 'Dedicated process controllers for autoclave sterilization cycles, validation, and data recording.',
-    icon: FlaskConical,
-    count: 'Custom',
-    href: '/products/autoclave-controllers',
-    highlight: false,
-    models: 'Autoclave Series',
-    colorClass: 'bg-rose-50',
-    iconColor: 'text-rose-500',
-    hoverBgClass: 'hover:bg-rose-50/50',
-    hoverBorderClass: 'hover:border-rose-200',
-  },
-  {
-    slug: 'process-indicators',
-    name: 'Process Indicators',
-    description: 'Multi-input process indicators for temperature, pressure, flow, and custom engineering unit display.',
-    icon: Activity,
-    count: 'Multiple models',
-    href: '/products/process-indicators',
-    highlight: false,
-    models: 'AI Indicator Series',
-    colorClass: 'bg-amber-50',
-    iconColor: 'text-amber-500',
-    hoverBgClass: 'hover:bg-amber-50/50',
-    hoverBorderClass: 'hover:border-amber-200',
-  },
-  {
-    slug: 'time-totalizers',
-    name: 'Time Totalizers',
-    description: 'Elapsed time and run-hour totalizer meters for machine maintenance scheduling and monitoring.',
-    icon: Clock,
-    count: 'Multiple models',
-    href: '/products/time-totalizers',
-    highlight: false,
-    models: 'TT Series',
-    colorClass: 'bg-teal-50',
-    iconColor: 'text-teal-500',
-    hoverBgClass: 'hover:bg-teal-50/50',
-    hoverBorderClass: 'hover:border-teal-200',
-  },
+    count: '15+ Models'
+  }
 ]
 
 export function ProductCategoriesSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-gray-50 to-white py-20 md:py-28">
+    <section className="relative overflow-hidden bg-white py-16 md:py-20">
       {/* Decorative background glow */}
       <div className="absolute -left-20 top-0 h-[500px] w-[500px] rounded-full bg-brand-orange/5 blur-[120px]" />
       <div className="absolute -right-20 bottom-0 h-[500px] w-[500px] rounded-full bg-brand-orange/5 blur-[120px]" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-brand-orange">
-              Our Products
+        <div className="mb-16 flex flex-col gap-4 md:flex-row md:items-end md:justify-between text-center md:text-left">
+          <div className="max-w-2xl mx-auto md:mx-0">
+            <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-brand-orange">
+              Our Expertise
             </p>
-            <h2 className="text-4xl font-bold text-dark md:text-5xl font-inter">
+            <h2 className="text-4xl font-extrabold text-dark md:text-5xl font-inter leading-tight">
               Product Categories
             </h2>
+            <p className="mt-4 text-lg text-gray-500 leading-relaxed">
+              Precision-engineered industrial instruments designed for accuracy, durability, and reliability across various manufacturing sectors.
+            </p>
           </div>
           <Link
             href="/products"
-            className="inline-flex items-center gap-2 text-base font-semibold text-brand-orange hover:gap-3 transition-all"
+            className="group inline-flex items-center gap-2 rounded-2xl border-2 border-brand-orange/20 px-8 py-4 text-sm font-bold text-brand-orange hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-all duration-300 shadow-sm hover:shadow-brand-orange/20"
           >
-            View All Products <ArrowRight className="h-5 w-5" />
+            Explore Full Range <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
         {/* Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((cat) => {
-            const Icon = cat.icon
-            return (
-              <Link
-                key={cat.slug}
-                href={cat.href}
-                className={`group product-card relative flex flex-col greey-border rounded-2xl bg-white border border-gray-100 p-6 text-dark transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${cat.hoverBgClass} ${cat.hoverBorderClass}`}
-              >
-                {/* Icon */}
-                <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl white-gradient transition-colors group-hover:bg-white ${cat.colorClass}`}>
-                  <Icon className={`h-6 w-6 ${cat.iconColor}`} />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={cat.href}
+              className="group relative flex flex-col overflow-hidden rounded-[24px] border border-gray-200 bg-white transition-all duration-500 hover:shadow-[0_20px_50px_rgba(245,112,44,0.12)] hover:-translate-y-1"
+            >
+              {/* Image Container */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-[23px] transform-gpu isolation-isolate">
+                <Image
+                  src={cat.image}
+                  alt={cat.name}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-[1.03] transform-gpu"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-dark/40 via-transparent to-transparent" />
+                
+                {/* Badge */}
+                <div className="absolute left-4 top-4 rounded-[30px] bg-white px-[10px] py-[4px] text-[11px] font-bold uppercase tracking-wider text-black shadow-md z-10">
+                  {cat.count}
                 </div>
 
-                {/* Content */}
-                <h3 className="text-lg font-bold leading-snug mb-2 text-dark">
-                  {cat.name}
-                </h3>
-                <p className="text-sm leading-relaxed flex-1 text-gray-500">
+                {/* Inner Border Glow */}
+                <div className="absolute inset-3 rounded-[16px] border border-white/10 pointer-events-none group-hover:border-white/30 transition-colors duration-500" />
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-1 flex-col p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-xl font-bold text-dark group-hover:text-brand-orange transition-colors duration-300 font-inter">
+                    {cat.name}
+                  </h3>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500 line-clamp-2">
                   {cat.description}
                 </p>
-
-                {/* Models tags */}
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {cat.models.split('·').map((model, i) => (
-                    <span 
-                      key={i}
-                      className="pills-cover"
-                    >
-                      {model.trim()}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
-                  <span className="text-sm font-bold text-brand-orange">
-                    {cat.count}
+                
+                <div className="mt-6 flex items-center gap-2 pt-4 border-t border-gray-50 group-hover:border-brand-orange/10 transition-colors">
+                  <span className="text-xs font-bold uppercase tracking-widest text-brand-orange">
+                    View Range
                   </span>
-                  <ArrowRight className="black-arrow h-4 w-4 text-gray-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-orange" />
+                  <div className="h-[1px] w-0 bg-brand-orange transition-all duration-300 group-hover:w-6" />
+                  <ArrowRight className="h-3.5 w-3.5 ml-auto text-gray-300 group-hover:text-brand-orange transition-transform group-hover:translate-x-1" />
                 </div>
-              </Link>
-            )
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>
