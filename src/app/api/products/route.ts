@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
+import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants'
 
-const WOOCOMMERCE_URL = 'https://backend.itherm.co.in/wp-json/wc/v3/products'
-const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY
-const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET
+const { baseUrl: WOOCOMMERCE_URL_BASE, consumerKey: CONSUMER_KEY, consumerSecret: CONSUMER_SECRET } = WOOCOMMERCE_CONFIG
+const WOOCOMMERCE_URL = `${WOOCOMMERCE_URL_BASE}/products`
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

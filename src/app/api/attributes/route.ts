@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
+import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants';
 
 export async function GET() {
-  const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
-  const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend.itherm.co.in/wp-json/wc/v3';
+  const { baseUrl: API_URL, consumerKey: CONSUMER_KEY, consumerSecret: CONSUMER_SECRET } = WOOCOMMERCE_CONFIG;
 
   if (!CONSUMER_KEY || !CONSUMER_SECRET) {
     return NextResponse.json({ error: 'WooCommerce credentials not configured' }, { status: 500 });

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, Phone, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { getMappedAttributes } from '@/lib/api/woo'
 import { NAV_ITEMS, type NavChild } from './nav.config'
 import { SITE_CONFIG } from '@/lib/utils/constants'
 

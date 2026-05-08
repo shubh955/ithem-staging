@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Search, X, Loader2, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { fetchWoo, getMappedAttributes } from '@/lib/api/woo'
 
 interface Product {
   id: number
@@ -61,7 +62,6 @@ export function ProductListing() {
         setLoading(false) // Show the first 12 items immediately
 
         // 2. Background Load (The remaining 100+ products)
-        // This won't block the UI
         const fullRes = await fetch('/api/products')
         const fullProducts = await fullRes.json()
         if (Array.isArray(fullProducts) && fullProducts.length > initialProducts.length) {

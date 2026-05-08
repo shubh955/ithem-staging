@@ -23,6 +23,12 @@ export const SITE_CONFIG = {
   youtubeHandle: 'i-therm',
 }
 
+export const WOOCOMMERCE_CONFIG = {
+  baseUrl: 'https://backend.itherm.co.in/wp-json/wc/v3',
+  consumerKey: 'ck_ac04b1878d6e4c0ca3749936c15dc9f56adc8f65',
+  consumerSecret: 'cs_6742f8784b875b412735577036f2d541865b0314',
+}
+
 export const PRODUCT_CATEGORIES = [
   {
     slug: 'temperature-controllers',
