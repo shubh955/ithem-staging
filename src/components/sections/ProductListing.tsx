@@ -303,7 +303,7 @@ export function ProductListing() {
             slug: opt
           }))
       }));
-  }, [categoryProducts]);
+  }, [categoryProducts, selectedCategory, attributes]);
 
   // 4. Robust Counting for Filter Visibility
   const filterCounts = useMemo(() => {
@@ -600,7 +600,7 @@ export function ProductListing() {
                   <Search className="h-10 w-10 text-gray-300" />
                 </div>
                 <h3 className="text-lg font-bold text-dark mb-2">No matches found</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs text-center">We couldn't find any products matching your current configuration filters.</p>
+                <p className="text-sm text-gray-500 mb-8 max-w-xs text-center">We couldn&apos;t find any products matching your current configuration filters.</p>
                 <button
                   onClick={clearFilters}
                   className="btn-premium btn-black-to-orange rounded-full px-8 py-3 text-[11px] font-bold uppercase tracking-widest"
