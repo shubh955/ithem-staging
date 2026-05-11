@@ -8,28 +8,28 @@ import { SITE_CONFIG } from '@/lib/utils/constants'
 
 const slides = [
   {
-    image: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=1920&q=80',
+    image: '/assets/images/Precision-Digital.png',
     tag: 'Pharmaceutical Industry',
-    headline: 'Precision Control\nfor Critical Processes',
-    sub: 'Autoclave controllers, data loggers & temperature controllers trusted by pharma manufacturers across India.',
+    headline: 'Precision Digital\nTemperature Controllers',
+    sub: 'Advanced industrial temperature controllers engineered for accurate monitoring, stable performance, and reliable process automation.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1920&q=80',
-    tag: 'Industrial Automation',
-    headline: 'Engineered for\nHarsh Environments',
-    sub: 'Robust PID temperature controllers and process indicators built for 24/7 industrial operation since 1996.',
+    image: '/assets/images/Advanced-PID.png',
+    tag: 'INDUSTRIAL TEMPERATURE CONTROL',
+    headline: 'Advanced PID\nTemperature Controllers',
+    sub: 'High-precision PID temperature controllers designed for stable performance, energy efficiency, and continuous industrial operation.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1920&q=80',
-    tag: 'Food & Beverage Processing',
-    headline: 'From Ovens to\nCold Storage',
-    sub: 'Temperature and humidity controllers for retorts, dryers, pasteurizers and cold chain management.',
+    image: '/assets/images/Process-Indicators.png',
+    tag: 'PROCESS MONITORING SOLUTIONS',
+    headline: 'Reliable\nProcess Indicators',
+    sub: 'High-accuracy process indicators designed for real-time monitoring, precise measurement, and dependable performance.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1920&q=80',
-    tag: 'Laboratory & Research',
-    headline: 'Accuracy You\nCan Measure',
-    sub: 'Multi-channel data loggers and ULT controllers for GMP-compliant validation and audit-ready records.',
+    image: '/assets/images/Digital-Timers.png',
+    tag: 'TIME CONTROL SOLUTIONS',
+    headline: 'Accurate\nDigital Timers',
+    sub: 'Reliable digital timers designed for precise time control, automation efficiency, and consistent operational performance.',
   },
 ]
 
@@ -122,13 +122,13 @@ export function HeroSection() {
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Link
               href="/products"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-orange px-8 py-4 text-base font-bold text-white hover:bg-brand-orange-dark transition-colors shadow-lg shadow-brand-orange/25"
+              className="btn-premium btn-orange-to-black inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold shadow-lg shadow-brand-orange/25"
             >
               Browse Products <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-white/25 px-8 py-4 text-base font-bold text-white hover:border-brand-orange/60 hover:bg-white/5 transition-colors"
+              className="btn-premium btn-outline-white-to-orange inline-flex items-center justify-center gap-2 rounded-xl px-8 py-4 text-base font-bold"
             >
               Get a Quote
             </Link>

@@ -52,7 +52,7 @@ export function ProductCategoriesSection() {
           </div>
           <Link
             href="/products"
-            className="group inline-flex items-center gap-2 rounded-2xl border-2 border-brand-orange/20 px-8 py-4 text-sm font-bold text-brand-orange hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-all duration-300 shadow-sm hover:shadow-brand-orange/20"
+            className="btn-premium btn-outline-orange-to-black group inline-flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-bold shadow-sm"
           >
             Explore Full Range <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>

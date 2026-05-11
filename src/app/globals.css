@@ -64,6 +64,45 @@ h1, h2, h3, h4, h5, h6 {
   color: #000000;
 }
 
+.line-imporve{
+  font-weight: 600;
+  letter-spacing: 0.6px;
+}
+
+.border-light{
+  border-bottom: 1px solid #12121212 !important;
+}
+
+.bg-light-grey{
+  background: #0000000a;
+  background-color: transparent;
+}
+
+.border-orange{
+  border-bottom: 1px solid var(--brand-orange);
+}
+
+.gap-30{
+  gap: 30px;
+}
+
+.border-round{
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  border-radius: 10px;
+}
+
+.height-190{
+  height: 140px;
+}
+
+.back-light-blue{
+  background: #237bb60f;
+}
+
+.border-b-light{
+  border-bottom: 1px solid #0000001a;
+}
+
 .feature-product-card{
   padding: 10px;
 }
@@ -188,6 +227,127 @@ button {
     font-size: 16px !important;
     line-height: 1.6 !important;
   }
+}
+
+/* Premium Button Hover Effects */
+.btn-premium {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-premium::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0;
+  z-index: -1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-premium:hover::after {
+  top: auto;
+  bottom: 0;
+  height: 100%;
+}
+
+.btn-premium:active {
+  transform: translateY(2px);
+}
+
+/* Orange to Black */
+.btn-orange-to-black {
+  background-color: var(--brand-orange) !important;
+  color: white !important;
+  border: 1px solid var(--brand-orange) !important;
+}
+
+.btn-orange-to-black::after {
+  background-color: var(--dark) !important;
+}
+
+.btn-orange-to-black:hover {
+  border-color: var(--dark) !important;
+}
+
+/* Black to Orange */
+.btn-black-to-orange {
+  background-color: var(--dark) !important;
+  color: white !important;
+  border: 1px solid var(--dark) !important;
+}
+
+.btn-black-to-orange::after {
+  background-color: var(--brand-orange) !important;
+}
+
+.btn-black-to-orange:hover {
+  border-color: var(--brand-orange) !important;
+}
+
+/* White Outline to Orange */
+.btn-outline-white-to-orange {
+  background-color: transparent !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.btn-outline-white-to-orange::after {
+  background-color: var(--brand-orange) !important;
+}
+
+.btn-outline-white-to-orange:hover {
+  border-color: var(--brand-orange) !important;
+}
+
+/* White Outline to Black */
+.btn-outline-white-to-black {
+  background-color: transparent !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.btn-outline-white-to-black::after {
+  background-color: var(--dark) !important;
+}
+
+.btn-outline-white-to-black:hover {
+  border-color: var(--dark) !important;
+}
+
+/* WhatsApp Green Fill */
+.btn-whatsapp-fill {
+  background-color: transparent !important;
+  color: #25D366 !important;
+  border: 1px solid #25D366 !important;
+}
+
+.btn-whatsapp-fill::after {
+  background-color: #25D366 !important;
+}
+
+.btn-whatsapp-fill:hover {
+  color: white !important;
+  border-color: #25D366 !important;
+}
+
+/* Orange Outline to Black */
+.btn-outline-orange-to-black {
+  background-color: transparent !important;
+  color: var(--brand-orange) !important;
+  border: 1px solid var(--brand-orange) !important;
+}
+
+.btn-outline-orange-to-black::after {
+  background-color: var(--dark) !important;
+}
+
+.btn-outline-orange-to-black:hover {
+  color: white !important;
+  border-color: var(--dark) !important;
 }
 
 /* Custom Scrollbar */

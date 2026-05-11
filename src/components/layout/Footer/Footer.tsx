@@ -28,7 +28,7 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-white text-gray-800 border-t border-gray-100">
+    <footer className="relative overflow-hidden bg-white text-gray-800 border-t">
       {/* Large Logo Watermark - Positioned Far Right & Vertically Centered */}
       <div className="absolute right-4 top-[64%] -translate-y-1/2 opacity-[0.04] pointer-events-none z-0 select-none hidden lg:block">
         <Image
@@ -49,7 +49,7 @@ export function Footer() {
           </div>
           <Link
             href="/contact"
-            className="flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold text-brand-orange hover:bg-gray-100 transition-colors shrink-0"
+            className="btn-premium btn-outline-white-to-black flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-bold shrink-0"
           >
             Request a Quote <ArrowRight className="h-4 w-4" />
           </Link>

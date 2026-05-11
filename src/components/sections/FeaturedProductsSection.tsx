@@ -39,9 +39,9 @@ export function FeaturedProductsSection() {
           </div>
           <Link
             href="/products"
-            className="inline-flex shrink-0 items-center gap-2 text-base font-semibold text-brand-orange hover:gap-3 transition-all"
+            className="btn-premium btn-black-to-orange inline-flex shrink-0 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm"
           >
-            View all products <ArrowRight className="h-5 w-5" />
+            View all products <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -120,7 +120,7 @@ export function FeaturedProductsSection() {
           </div>
           <Link
             href="/custom-solutions"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-orange px-6 py-3 text-sm font-bold text-white hover:bg-orange-600 transition-colors"
+            className="btn-premium btn-orange-to-black inline-flex shrink-0 items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold shadow-md"
           >
             Request Custom OEM Quote <ArrowRight className="h-4 w-4" />
           </Link>

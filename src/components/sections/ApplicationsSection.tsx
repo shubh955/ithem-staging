@@ -123,7 +123,7 @@ export function ApplicationsSection() {
         <div className="mt-12 text-center">
           <Link
             href="/solutions"
-            className="inline-flex items-center gap-2 rounded-xl border-2 border-dark px-8 py-3.5 text-base font-bold text-dark hover:bg-dark hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border border-dark px-8 py-3.5 text-base font-bold text-dark hover:bg-dark hover:text-white transition-colors"
           >
             View All Solutions <ArrowRight className="h-5 w-5" />
           </Link>

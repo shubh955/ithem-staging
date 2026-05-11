@@ -98,13 +98,13 @@ export function Header() {
         {/* Top bar */}
         <div className="hidden bg-dark py-2 text-[11px] font-semibold tracking-wider text-gray-300 border-b border-white/5 md:block">
           <div className="mx-auto flex max-w-7xl items-center justify-end px-4 sm:px-6 lg:px-8 gap-8">
-            <a href="mailto:sales@itherm.co.in" className="flex items-center gap-2 hover:text-brand-orange transition-all duration-300">
-              <Mail className="h-3.5 w-3.5 text-brand-orange" />
-              SALES@ITHERM.CO.IN
+            <a href="mailto:sales@itherm.co.in" className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
+              <Mail className="h-3.5 w-3.5 text-white group-hover:text-brand-orange transition-colors duration-300" />
+              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">sales@itherm.co.in</span>
             </a>
-            <a href="tel:+918591939916" className="flex items-center gap-2 hover:text-brand-orange transition-all duration-300">
-              <Phone className="h-3.5 w-3.5 text-brand-orange" />
-              +91 8591939916
+            <a href="tel:+918591939916" className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
+              <Phone className="h-3.5 w-3.5 text-white group-hover:text-brand-orange transition-colors duration-300" />
+              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">+91 8591939916</span>
             </a>
           </div>
         </div>
@@ -127,22 +127,39 @@ export function Header() {
             {NAV_ITEMS.map((item) => {
               const displayItem = { ...item }
               if (item.label === 'Products' && attributes.length > 0) {
-                displayItem.children = attributes.map(cat => ({
-                  heading: cat.name,
-                  items: cat.terms.length > 0 
-                    ? cat.terms.map((term: any) => ({
-                        label: term.name,
-                        href: `/products?category=${cat.slug}&term=${term.slug}`,
-                        description: term.description || `High-quality ${term.name} solutions for industrial process control.`,
-                        image: item.defaultImage
-                      }))
-                    : [{
-                        label: `All ${cat.name}`,
-                        href: `/products/${cat.slug}`,
-                        description: `Explore our complete range of ${cat.name}.`,
-                        image: item.defaultImage
-                      }]
-                }))
+                displayItem.children = attributes
+                  .filter(cat => cat.name !== 'Discontinued')
+                  .map(cat => {
+                  const activeTerms = cat.terms.filter((t: any) => t.count !== 0 && t.name !== 'Discontinued');
+                  const heading = cat.name.replace(/&amp;/g, '&').replace(/\bMultifun\b/g, 'Multifunction');
+                  
+                  let items = activeTerms.map((term: any) => ({
+                    label: term.name,
+                    href: `/products?category=${cat.slug}&term=${term.slug}`,
+                    description: term.description || `High-quality ${term.name} solutions for industrial process control.`,
+                    image: item.defaultImage
+                  }));
+
+                  // Manual Additions for Transmitters
+                  if (heading.toLowerCase().includes('transmitter')) {
+                    items.push({
+                      label: 'Head Mounted',
+                      href: '/products/transmitters/tr-213',
+                      description: 'Advanced TR-213 head-mounted temperature transmitter.',
+                      image: item.defaultImage
+                    });
+                  }
+
+                  return {
+                    heading: heading,
+                    items: items.length > 0 ? items : [{
+                      label: `All ${heading}`,
+                      href: `/products/${cat.slug}`,
+                      description: `Explore our complete range of ${heading}.`,
+                      image: item.defaultImage
+                    }]
+                  };
+                })
               }
 
               return (
@@ -219,6 +236,7 @@ export function Header() {
                                           href={child.href}
                                           className="group/link block rounded-xl px-2.5 py-1.5 transition-all hover:bg-orange-50"
                                           onMouseEnter={() => setHoveredItem(child)}
+                                          onClick={() => setActiveMenu(null)}
                                         >
                                           <div className="flex items-center justify-between">
                                             <span className="text-sm font-semibold text-gray-700 group-hover/link:text-brand-orange">
@@ -390,20 +408,36 @@ export function Header() {
                 {NAV_ITEMS.map((item) => {
                   const displayItem = { ...item }
                   if (item.label === 'Products' && attributes.length > 0) {
-                    displayItem.children = attributes.map(cat => ({
-                      heading: cat.name,
-                      items: cat.terms.length > 0
-                        ? cat.terms.map((term: any) => ({
-                            label: term.name,
-                            href: `/products?category=${cat.slug}&term=${term.slug}`,
-                            description: term.description || `Explore ${term.name}`
-                          }))
-                        : [{
-                            label: `All ${cat.name}`,
-                            href: `/products/${cat.slug}`,
-                            description: `Explore our complete range of ${cat.name}.`
-                          }]
-                    }))
+                    displayItem.children = attributes
+                      .filter(cat => cat.name !== 'Discontinued')
+                      .map(cat => {
+                      const activeTerms = cat.terms.filter((t: any) => t.count !== 0 && t.name !== 'Discontinued');
+                      const heading = cat.name.replace(/&amp;/g, '&').replace(/\bMultifun\b/g, 'Multifunction');
+
+                      let items = activeTerms.map((term: any) => ({
+                        label: term.name,
+                        href: `/products?category=${cat.slug}&term=${term.slug}`,
+                        description: term.description || `Explore ${term.name}`
+                      }));
+
+                      // Manual Additions for Transmitters
+                      if (heading.toLowerCase().includes('transmitter')) {
+                        items.push({
+                          label: 'Head Mounted',
+                          href: '/products/transmitters/tr-213',
+                          description: 'Advanced TR-213 head-mounted temperature transmitter.'
+                        });
+                      }
+
+                      return {
+                        heading: heading,
+                        items: items.length > 0 ? items : [{
+                          label: `All ${heading}`,
+                          href: `/products/${cat.slug}`,
+                          description: `Explore our complete range of ${heading}.`
+                        }]
+                      };
+                    })
                   }
 
                   return (
