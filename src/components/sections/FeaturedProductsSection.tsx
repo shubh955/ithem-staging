@@ -1,7 +1,19 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
-import { FEATURED_PRODUCTS } from '@/lib/utils/constants'
+import { ArrowRight, Loader2 } from 'lucide-react'
+
+interface Product {
+  id: number
+  name: string
+  slug: string
+  images: { src: string }[]
+  categories: { name: string; slug: string }[]
+  short_description: string
+  attributes: { name: string; options: string[] }[]
+}
 
 const badges: Record<string, { label: string; className: string }> = {
   Popular: { label: 'Popular', className: 'bg-brand-orange text-white' },
@@ -9,6 +21,25 @@ const badges: Record<string, { label: string; className: string }> = {
 }
 
 export function FeaturedProductsSection() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('/api/products')
+        const data = await response.json()
+        // Take the first 4 products as featured
+        setProducts(data.slice(0, 4))
+      } catch (error) {
+        console.error('Error fetching featured products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProducts()
+  }, [])
+
   return (
     <section className="greey-background relative overflow-hidden bg-white py-16 md:py-20">
       {/* Subtle dotted grid background */}
@@ -46,69 +77,83 @@ export function FeaturedProductsSection() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURED_PRODUCTS.map((product) => (
-            <Link
-              key={product.model}
-              href={`/products/${product.category}/${product.slug}`}
-              className="group feature-product-card flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden hover:border-brand-orange/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
-            >
-              {/* Image area */}
-              <div className="upper-cover relative flex items-center justify-center bg-gray-50 h-48 overflow-hidden border-b border-gray-100">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="product-image object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                />
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-orange" />
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((product) => {
+              const mainCategory = product.categories[0]?.slug || 'uncategorized'
+              const image = product.images[0]?.src || '/placeholder-product.jpg'
+              const size = product.attributes.find(a => a.name.toLowerCase().includes('size'))?.options[0] || 'Standard'
+              const badge = null
 
-                {/* Badge */}
-                {product.badge && badges[product.badge] && (
-                  <span className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold z-10 ${badges[product.badge].className}`}>
-                    {badges[product.badge].label}
-                  </span>
-                )}
+              // Strip size from description to avoid redundancy
+              const cleanDescription = product.short_description
+                .replace(/\d{2}x\d{2}\s*MM/gi, '')
+                .replace(/\d{2}x\d{2}/gi, '')
+                .trim();
 
-                {/* Panel size chip */}
-                <span className="absolute black-color top-3 right-3 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium z-10">
-                  {product.size}
-                </span>
+              return (
+                <Link
+                  key={product.id}
+                  href={`/products/${mainCategory}/${product.slug}`}
+                  className="group feature-product-card flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden hover:border-brand-orange/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+                >
+                  {/* Image area */}
+                  <div className="upper-cover relative flex items-center justify-center bg-gray-50 h-48 overflow-hidden border-b border-gray-100">
+                    <Image
+                      src={image}
+                      alt={product.name}
+                      fill
+                      className="product-image object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
 
-                {/* Product type chip */}
-                <span className="absolute bottom-3 left-3 rounded-full border border-gray-200 bg-white/90 px-2.5 py-1 text-[10px] font-bold text-brand-orange uppercase tracking-wider z-10">
-                  {product.type}
-                </span>
-              </div>
+                    {/* Badge */}
+                    {badge && badges[badge] && (
+                      <span className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold z-10 ${badges[badge].className}`}>
+                        {badges[badge].label}
+                      </span>
+                    )}
 
-              {/* Content */}
-              <div className="feature-card-content flex flex-1 flex-col p-5">
-                <h3 className="text-base font-bold text-dark leading-snug group-hover:text-brand-orange transition-colors">
-                  {product.name}
-                </h3>
-                <p className="mt-2 text-sm text-gray-500 leading-relaxed flex-1">
-                  {product.description}
-                </p>
+                    {/* Panel size chip */}
+                    <span className="absolute black-color top-3 right-3 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium z-10">
+                      {size}
+                    </span>
+                  </div>
 
-                {/* Key specs */}
-                {/* <ul className="mt-4 space-y-2">
-                  {product.specs.slice(0, 3).map((spec) => (
-                    <li key={spec} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-orange" />
-                      {spec}
-                    </li>
-                  ))}
-                </ul> */}
+                  {/* Content */}
+                  <div className="feature-card-content flex flex-1 flex-col p-5 text-left items-start">
+                    <h3 className="text-base font-bold text-dark leading-snug group-hover:text-brand-orange transition-colors line-clamp-1 text-left w-full">
+                      {product.name}
+                    </h3>
+                    
+                    {/* Technical Specs from API */}
+                    <div className="mt-4 text-base text-gray-500 leading-relaxed flex-1 line-clamp-2 text-left">
+                      {product.attributes
+                        .filter(attr => !attr.name.toLowerCase().includes('size'))
+                        .slice(0, 2)
+                        .map((attr, idx) => (
+                          <div key={idx} className="block truncate">
+                            {attr.options[0]}
+                          </div>
+                        ))
+                      }
+                    </div>
 
-                {/* CTA row */}
-                <div className="mt-5 flex items-center justify-between pt-4 border-t border-gray-100">
-                  <span className="text-sm font-semibold text-brand-orange">View Details</span>
-                  <ArrowRight className="h-4 w-4 text-brand-orange opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                    {/* CTA row */}
+                    <div className="mt-5 flex w-full items-center justify-between pt-4 border-t border-gray-100">
+                      <span className="text-sm font-semibold text-brand-orange">View Details</span>
+                      <ArrowRight className="h-4 w-4 text-brand-orange opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
 
         {/* Bottom banner */}
         <div className="mt-12 rounded-2xl bg-dark px-8 py-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

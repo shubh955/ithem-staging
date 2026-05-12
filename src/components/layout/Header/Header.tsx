@@ -135,7 +135,7 @@ export function Header() {
                   
                   let items = activeTerms.map((term: any) => ({
                     label: term.name,
-                    href: `/products?category=${cat.slug}&term=${term.slug}`,
+                    href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.name)}`,
                     description: term.description || `High-quality ${term.name} solutions for industrial process control.`,
                     image: item.defaultImage
                   }));
@@ -154,7 +154,7 @@ export function Header() {
                     heading: heading,
                     items: items.length > 0 ? items : [{
                       label: `All ${heading}`,
-                      href: `/products/${cat.slug}`,
+                      href: `/products?category=${cat.slug}`,
                       description: `Explore our complete range of ${heading}.`,
                       image: item.defaultImage
                     }]
@@ -416,7 +416,7 @@ export function Header() {
 
                       let items = activeTerms.map((term: any) => ({
                         label: term.name,
-                        href: `/products?category=${cat.slug}&term=${term.slug}`,
+                        href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.name)}`,
                         description: term.description || `Explore ${term.name}`
                       }));
 

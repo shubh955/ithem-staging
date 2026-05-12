@@ -197,7 +197,7 @@ export default function ProductCategoryPage({ params }: Props) {
             {PRODUCT_CATEGORIES.filter((c) => c.slug !== params.category).map((c) => (
               <Link
                 key={c.slug}
-                href={`/products/${c.slug}`}
+                href={`/products?category=${c.slug}`}
                 className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-dark hover:border-brand-orange/40 hover:text-brand-orange transition-colors"
               >
                 {c.name}

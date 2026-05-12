@@ -26,6 +26,17 @@ interface Attribute {
   terms: { name: string; slug: string }[]
 }
 
+// Unified normalization for engineering data and filters
+const normalize = (s: string) => {
+  if (!s) return '';
+  return s.toLowerCase()
+    .replace(/&amp;/g, '&')
+    .replace(/multifun/g, 'multifunction')
+    .replace(/[*x]/g, 'x')
+    .replace(/[^a-z0-9x]/g, '')
+    .trim();
+};
+
 export function ProductListing() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -50,37 +61,31 @@ export function ProductListing() {
       try {
         setLoading(true)
         
-        // 1. Initial Quick Load (12 products + attributes)
-        const [initialRes, attrRes] = await Promise.all([
-          fetch('/api/products?initial=true'),
-          fetch('/api/attributes')
+        // 1. Initial Quick Load (attributes + partial products)
+        const [attrRes, initialRes] = await Promise.all([
+          fetch('/api/attributes'),
+          fetch('/api/products?initial=true')
         ])
         
-        const initialProducts = await initialRes.json()
         const attrData = await attrRes.json()
+        const initialProducts = await initialRes.json()
         
-        setProducts(initialProducts)
         setAttributes(attrData)
+        setProducts(initialProducts)
         
-        // Even if we have initial products, wait a bit for the UI to "form"
-        // and images to start rendering before hiding the loader
-        setTimeout(() => {
-          if (Array.isArray(initialProducts) && initialProducts.length > 0) {
-            setLoading(false)
-          }
-        }, 1200)
-
-        // 2. Background Load (The remaining 100+ products)
+        // 2. Full Catalog Load - We wait for this before hiding loader 
+        // as per user request for "fully loaded" data
         const fullRes = await fetch('/api/products')
         const fullProducts = await fullRes.json()
-        if (Array.isArray(fullProducts)) {
+        
+        if (Array.isArray(fullProducts) && fullProducts.length > 0) {
           setProducts(fullProducts)
         }
         
-        // Final safety delay to ensure smooth transition
-        setTimeout(() => setLoading(false), 500)
+        // Ensure smooth transition with a tiny buffer
+        setTimeout(() => setLoading(false), 400)
       } catch (error) {
-        console.error('Error loading data:', error)
+        console.error('Error loading catalog:', error)
         setLoading(false)
       }
     }
@@ -89,29 +94,44 @@ export function ProductListing() {
   }, [])
 
   useEffect(() => {
-    // Show loader during category/term transitions
-    setLoading(true)
-    
     const category = searchParams.get('category')
     const terms = searchParams.get('terms')?.split(',') || []
     const singleTerm = searchParams.get('term')
     const finalTerms = [...terms]
-    if (singleTerm && !finalTerms.includes(singleTerm)) finalTerms.push(singleTerm)
     
-    if (category) setSelectedCategory(category)
+    // Ensure all terms are normalized when checking for duplicates
+    if (singleTerm && !finalTerms.some(t => normalize(t) === normalize(singleTerm))) {
+      finalTerms.push(singleTerm)
+    }
+    
+    setSelectedCategory(category)
     setSelectedTerms(finalTerms)
     setCurrentPage(1)
-
-    // Wait for the UI to transition and filter the data
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
   }, [searchParams])
 
   // 1. First, compute the base filtered products (only by search and category)
   const categoryProducts = useMemo(() => {
+    // Precise slug matching and hierarchy awareness
+    const selectedSlugNorm = selectedCategory ? normalize(selectedCategory) : null;
+    
+    // Find the category and its children from the attributes map to allow products in sub-categories
+    const currentCatData = selectedSlugNorm ? attributes.find(a => 
+      normalize(a.slug) === selectedSlugNorm || 
+      normalize(a.name) === selectedSlugNorm
+    ) : null;
+
+    const allowedSlugs = new Set<string>();
+    if (selectedSlugNorm) {
+      allowedSlugs.add(selectedSlugNorm);
+      // Fallback: also add raw slug
+      allowedSlugs.add(selectedCategory!.toLowerCase());
+      
+      currentCatData?.terms.forEach(t => {
+        allowedSlugs.add(normalize(t.slug));
+        allowedSlugs.add(normalize(t.name));
+      });
+    }
+
     return products.filter(product => {
       // Robust search
       const matchesSearch = !searchQuery || 
@@ -121,17 +141,15 @@ export function ProductListing() {
       // Flexible Category Matching: Ensures parent categories show products from child series
       if (!selectedCategory) return matchesSearch;
 
-      const normalize = (s: string) => s.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
-      const selectedSlugNorm = normalize(selectedCategory);
-
       const matchesCategory = product.categories.some(c => {
         const catSlugNorm = normalize(c.slug);
-        return catSlugNorm === selectedSlugNorm || catSlugNorm.includes(selectedSlugNorm) || selectedSlugNorm.includes(catSlugNorm);
+        const catNameNorm = normalize(c.name);
+        return allowedSlugs.has(catSlugNorm) || allowedSlugs.has(catNameNorm);
       });
 
       return matchesSearch && matchesCategory
     })
-  }, [products, searchQuery, selectedCategory])
+  }, [products, searchQuery, selectedCategory, attributes])
 
   // 2. Compute the fully filtered products (including terms)
   const filteredProducts = useMemo(() => {
@@ -141,7 +159,6 @@ export function ProductListing() {
     const termGroups: { [key: string]: string[] } = {};
     
     selectedTerms.forEach(term => {
-      const normalize = (s: string) => s.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
       const termNorm = normalize(term);
       let foundGroup = 'Other';
 
@@ -174,9 +191,6 @@ export function ProductListing() {
 
     // 2. Filter products: Must match ALL groups (AND), and at least one term in each group (OR)
     return categoryProducts.filter(product => {
-      // Robust normalization for technical values
-      const normalize = (s: string) => s.toLowerCase().replace(/[*x]/g, 'x').replace(/[^a-z0-9x]/g, '').trim();
-      
       return Object.entries(termGroups).every(([groupName, termsInGroup]) => {
         // Product must match AT LEAST ONE term in this group
         return termsInGroup.some(term => {
@@ -246,19 +260,13 @@ export function ProductListing() {
           nameLower.includes('multifunction') || 
           nameLower === 'timers' || 
           nameLower === 'counters' || 
-          nameLower.includes('temperature controller');
+          nameLower.includes('temperature controller') ||
+          nameLower.includes('process controller') ||
+          nameLower.includes('application specific');
         
-        if (cat.slug !== 'uncategorized' && !isSelected && !isParentCategory) {
-          // If a category is selected, only show series that belong to it
-          if (selectedCategory) {
-            const currentCatData = attributes.find(a => a.slug === selectedCategory);
-            const isAllowedTerm = currentCatData?.terms.some(t => 
-              t.slug === cat.slug || t.name === cat.name
-            );
-            if (!isAllowedTerm) return;
+          if (cat.slug !== 'uncategorized' && !isSelected && !isParentCategory) {
+            filterMap.get('Series')!.add(cat.name);
           }
-          filterMap.get('Series')!.add(cat.name);
-        }
       });
 
       // 2. Extract Attributes
@@ -279,14 +287,6 @@ export function ProductListing() {
         }
 
         attr.options.forEach(opt => {
-          // If a category is selected and we are in the Series group, validate against allowed terms
-          if (selectedCategory && targetName === 'Series') {
-            const currentCatData = attributes.find(a => a.slug === selectedCategory);
-            const isAllowedTerm = currentCatData?.terms.some(t => 
-              t.name === opt || t.slug === opt
-            );
-            if (!isAllowedTerm) return;
-          }
           filterMap.get(targetName)!.add(opt);
         });
       });
@@ -308,7 +308,6 @@ export function ProductListing() {
   // 4. Robust Counting for Filter Visibility
   const filterCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
-    const normalize = (s: string) => s.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
     
     // Count based on the products matching the CURRENT selection
     filteredProducts.forEach(product => {
@@ -337,15 +336,37 @@ export function ProductListing() {
   }, [filteredProducts, currentPage])
 
   const toggleTerm = (term: string) => {
-    const newTerms = selectedTerms.includes(term) 
-      ? selectedTerms.filter(t => t !== term) 
-      : [...selectedTerms, term];
+    const termNorm = normalize(term);
+    
+    const isCurrentlySelected = selectedTerms.some(t => normalize(t) === termNorm) || 
+                               (selectedCategory && normalize(selectedCategory) === termNorm);
+
+    let newTerms = [...selectedTerms];
+    let newCategory = selectedCategory;
+
+    if (isCurrentlySelected) {
+      newTerms = newTerms.filter(t => normalize(t) !== termNorm);
+      if (newCategory && normalize(newCategory) === termNorm) {
+        newCategory = null;
+      }
+    } else {
+      newTerms.push(term);
+    }
     
     setSelectedTerms(newTerms);
+    setSelectedCategory(newCategory);
     setCurrentPage(1);
 
     // Sync with URL
     const params = new URLSearchParams(searchParams.toString());
+    params.delete('term'); // Clean up singular param to avoid "sticking"
+    
+    if (newCategory) {
+      params.set('category', newCategory);
+    } else {
+      params.delete('category');
+    }
+
     if (newTerms.length > 0) {
       params.set('terms', newTerms.join(','));
     } else {
@@ -363,7 +384,7 @@ export function ProductListing() {
 
   const currentCategoryName = useMemo(() => {
     if (!selectedCategory) return 'Our Products'
-    const cat = attributes.find(a => a.slug === selectedCategory)
+    const cat = attributes.find(a => normalize(a.slug) === normalize(selectedCategory))
     const name = cat ? cat.name : selectedCategory.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
     return name.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
   }, [selectedCategory, attributes])
@@ -416,7 +437,6 @@ export function ProductListing() {
                       </h3>
                       <div className="space-y-4">
                       {filter.terms.map((term) => {
-                        const normalize = (s: string) => s.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
                         const isSelected = selectedTerms.some(t => normalize(t) === normalize(term.slug));
                         
                         const normTermName = normalize(term.name);
@@ -509,9 +529,20 @@ export function ProductListing() {
 
           <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 relative">
             {loading ? (
-              <div className="col-span-full flex flex-col items-center justify-center py-32">
-                <Loader2 className="h-10 w-10 animate-spin text-[#0070bc]" strokeWidth={1.5} />
-                <p className="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Initialising Catalog...</p>
+              <div className="col-span-full flex flex-col items-center justify-center py-48 bg-white/50 backdrop-blur-sm rounded-3xl border border-gray-100/50 shadow-inner">
+                <div className="relative">
+                  <div className="absolute -inset-4 bg-[#0070bc]/10 rounded-full blur-2xl animate-pulse"></div>
+                  <Loader2 className="h-12 w-12 animate-spin text-[#0070bc] relative z-10" strokeWidth={1.5} />
+                </div>
+                <p className="mt-8 text-[11px] font-bold text-[#0070bc] uppercase tracking-[0.3em] animate-pulse text-center">
+                  Synchronizing Engineering Catalog...<br/>
+                  <span className="text-[9px] text-gray-400 font-medium tracking-widest mt-2 block">Optimizing Filter Matrix</span>
+                </p>
+                <div className="mt-6 flex gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0070bc]/20 animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0070bc]/40 animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0070bc]/60 animate-bounce"></span>
+                </div>
               </div>
             ) : paginatedProducts.length > 0 ? (
               paginatedProducts.map((product) => {

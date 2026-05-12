@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     type: 'website',
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: '/favicon-logo.png',
+    shortcut: '/favicon-logo.png',
+    apple: '/favicon-logo.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 
@@ -99,13 +100,13 @@ export function ProductImageSlider({ images, productName }: ProductImageSliderPr
       </div>
 
       {/* Lightbox */}
-      {zoomed && (
+      {zoomed && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setZoomed(false)}
         >
           <div
-            className="relative max-h-[90vh] max-w-3xl w-full rounded-2xl overflow-hidden bg-white"
+            className="relative max-h-[90vh] max-w-3xl w-full rounded-2xl overflow-hidden bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
@@ -117,7 +118,7 @@ export function ProductImageSlider({ images, productName }: ProductImageSliderPr
             />
             <button
               onClick={() => setZoomed(false)}
-              className="absolute top-3 right-3 rounded-lg bg-gray-100 hover:bg-gray-200 p-1.5 text-dark transition-colors"
+              className="absolute top-3 right-3 rounded-lg bg-gray-100 hover:bg-gray-200 p-1.5 text-dark transition-colors shadow-sm"
               aria-label="Close zoom"
             >
               ✕
@@ -139,7 +140,8 @@ export function ProductImageSlider({ images, productName }: ProductImageSliderPr
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

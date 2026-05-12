@@ -31,33 +31,34 @@ export async function GET() {
 
     // 3. For each category, find ALL matching attributes and merge their terms
     const menuData = await Promise.all(categories.map(async (cat: any) => {
-      const cleanCatName = cat.name.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
-      const catSlug = cat.slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normalizeMatch = (s: string) => (s || '').toLowerCase()
+        .replace(/&amp;/g, '&')
+        .replace(/multifunction/g, 'multifun')
+        .replace(/[^a-z0-9]/g, '');
       
-      // Find ALL matching attributes (not just the first one)
+      const cleanCatName = normalizeMatch(cat.name);
+      const catSlug = normalizeMatch(cat.slug);
+      
+      // Find matching attributes strictly
       const matchingAttrs = attributes.filter((attr: any) => {
-        const cleanAttrName = attr.name.toLowerCase().replace(/&amp;/g, '&').replace(/[^a-z0-9]/g, '');
-        const attrSlug = attr.slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const cleanAttrName = normalizeMatch(attr.name);
+        const attrSlug = normalizeMatch(attr.slug);
         
         // Exact or very close matches
         if (cleanAttrName === cleanCatName || attrSlug === catSlug) return true;
         
-        // Handle 'Multifun' specifically to avoid it matching generic 'Timers'
-        if (cleanCatName.includes('multifun')) {
-          return cleanAttrName.includes('multifun');
-        }
-        
-        // Generic matches but exclude 'multifun' if the category is just 'timers'
-        if (cleanAttrName.includes('multifun') && !cleanCatName.includes('multifun')) {
-          return false;
-        }
+        // Strictly separate Multifunction from regular Timers/Counters
+        const isMultifunCat = cleanCatName.includes('multifun');
+        const isMultifunAttr = cleanAttrName.includes('multifun');
 
+        if (isMultifunCat !== isMultifunAttr) return false;
+        
+        // Otherwise, allow matching only if there is a direct containment relationship
+        // This avoids matching generic "Series" to everything
         return cleanAttrName.includes(cleanCatName) || 
                cleanCatName.includes(cleanAttrName) ||
                attrSlug.includes(catSlug) ||
-               catSlug.includes(attrSlug) ||
-               (cleanCatName === 'timers' && cleanAttrName === 'timersseries') ||
-               (cleanCatName === 'timers' && cleanAttrName === 'timers');
+               catSlug.includes(attrSlug);
       });
 
       let allTerms: any[] = [];
