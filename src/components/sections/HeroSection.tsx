@@ -8,25 +8,25 @@ import { SITE_CONFIG } from '@/lib/utils/constants'
 
 const slides = [
   {
-    image: '/assets/images/Precision-Digital.png',
+    image: '/assets/images/Digital-Temperature-banner.webp',
     tag: 'Pharmaceutical Industry',
     headline: 'Precision Digital\nTemperature Controllers',
     sub: 'Advanced industrial temperature controllers engineered for accurate monitoring, stable performance, and reliable process automation.',
   },
   {
-    image: '/assets/images/Advanced-PID.png',
+    image: '/assets/images/PID-Temperature-banner.webp',
     tag: 'INDUSTRIAL TEMPERATURE CONTROL',
     headline: 'Advanced PID\nTemperature Controllers',
     sub: 'High-precision PID temperature controllers designed for stable performance, energy efficiency, and continuous industrial operation.',
   },
   {
-    image: '/assets/images/Process-Indicators.png',
+    image: '/assets/images/Process-Indicators-banner.webp',
     tag: 'PROCESS MONITORING SOLUTIONS',
     headline: 'Reliable\nProcess Indicators',
     sub: 'High-accuracy process indicators designed for real-time monitoring, precise measurement, and dependable performance.',
   },
   {
-    image: '/assets/images/Digital-Timers.png',
+    image: '/assets/images/Digital-Timers-banner.webp',
     tag: 'TIME CONTROL SOLUTIONS',
     headline: 'Accurate\nDigital Timers',
     sub: 'Reliable digital timers designed for precise time control, automation efficiency, and consistent operational performance.',
@@ -62,7 +62,7 @@ export function HeroSection() {
             src={slide.image}
             alt={slide.tag}
             fill
-            className="object-cover object-center"
+            className="object-cover object-right"
             priority={i === 0}
             sizes="100vw"
           />
