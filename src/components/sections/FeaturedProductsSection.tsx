@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Star } from 'lucide-react'
 import { fetchWoo } from '@/lib/api/woo'
 
 interface Product {
@@ -22,8 +22,8 @@ export async function FeaturedProductsSection() {
   let products: Product[] = []
   
   try {
-    // Fetch only 4 products for the featured section with 24h cache
-    const data = await fetchWoo('/products?per_page=4&status=publish', {
+    // Fetch only products marked as featured in WooCommerce.
+    const data = await fetchWoo('/products?featured=true&per_page=4&page=1&status=publish', {
       next: { revalidate: 86400 }
     })
     products = data
@@ -62,10 +62,10 @@ export async function FeaturedProductsSection() {
             </p>
           </div>
           <Link
-            href="/products"
+            href="/featured-products"
             className="btn-premium btn-black-to-orange inline-flex shrink-0 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold shadow-sm"
           >
-            View all products <ArrowRight className="h-4 w-4" />
+            View all featured <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -78,9 +78,9 @@ export async function FeaturedProductsSection() {
             const badge = null
 
             return (
-              <Link
+              <a
                 key={product.id}
-                href={`/products/${mainCategory}/${product.slug}`}
+                href={`/products/${mainCategory}/${product.slug}?id=${product.id}`}
                 className="group feature-product-card flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden hover:border-brand-orange/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
               >
                 {/* Image area */}
@@ -93,12 +93,11 @@ export async function FeaturedProductsSection() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
 
-                  {/* Badge */}
-                  {badge && badges[badge] && (
-                    <span className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold z-10 ${badges[badge].className}`}>
-                      {badges[badge].label}
-                    </span>
-                  )}
+                  {/* Featured badge */}
+                  <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-white shadow-sm">
+                    <Star className="h-3 w-3 fill-white" />
+                    Featured
+                  </span>
 
                   {/* Panel size chip */}
                   <span className="absolute black-color top-3 right-3 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium z-10">
@@ -131,7 +130,7 @@ export async function FeaturedProductsSection() {
                     <ArrowRight className="h-4 w-4 text-brand-orange opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
-              </Link>
+              </a>
             )
           })}
         </div>

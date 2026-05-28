@@ -1,13 +1,14 @@
 'use client'
 
-import { notFound, useParams } from 'next/navigation'
+import { notFound, useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useMemo } from 'react'
-import { ArrowRight, Download, Phone, CheckCircle2, ChevronRight, MessageSquare, FileText, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Download, Phone, CheckCircle2, ChevronRight, MessageSquare, FileText, ShieldCheck, Star } from 'lucide-react'
 import { PageHeroSection } from '@/components/sections/PageHeroSection'
 import { ProductImageSlider } from '@/components/ui/ProductImageSlider'
 import { SITE_CONFIG } from '@/lib/utils/constants'
+import { fetchCachedJson } from '@/lib/api/client-cache'
 
 type Tab = 'features' | 'specs' | 'applications'
 
@@ -21,14 +22,17 @@ interface ProductData {
   categories: { name: string; slug: string }[];
   attributes: { name: string; options: string[] }[];
   downloads?: { name: string; file: string }[];
+  featured?: boolean;
 }
 
 export default function ProductDetailPage() {
   const params = useParams()
-  const categorySlug = params?.category as string
+  const searchParams = useSearchParams()
   const productSlug = params?.slug as string
 
-  const [products, setProducts] = useState<ProductData[]>([])
+  const productId = searchParams.get('id')
+  const [product, setProduct] = useState<ProductData | null>(null)
+  const [related, setRelated] = useState<any[]>([])
   const [tables, setTables] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('features')
@@ -36,16 +40,29 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [productsRes, tablesRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('https://backend.itherm.co.in/wp-json/itherm/v1/tables')
-        ])
-        
-        const productsData = await productsRes.json()
-        const tablesData = await tablesRes.json()
+        const productUrl = productId
+          ? `/api/products?id=${productId}`
+          : `/api/products?search=${encodeURIComponent(productSlug)}&per_page=1&page=1`
 
-        if (Array.isArray(productsData)) {
-          setProducts(productsData)
+        const [productData, tablesData] = await Promise.all([
+          fetchCachedJson<any>(productUrl),
+          fetchCachedJson<any[]>('https://backend.itherm.co.in/wp-json/itherm/v1/tables')
+        ])
+
+        const nextProduct = productId
+          ? productData
+          : Array.isArray(productData.products)
+            ? productData.products.find((p: ProductData) => p.slug === productSlug) || productData.products[0]
+            : null
+
+        if (nextProduct?.id) {
+          setProduct(nextProduct)
+        }
+
+        setRelated([])
+
+        if (!nextProduct?.id) {
+          setProduct(null)
         }
         if (Array.isArray(tablesData)) {
           setTables(tablesData)
@@ -57,34 +74,7 @@ export default function ProductDetailPage() {
       }
     }
     loadData()
-  }, [])
-
-  // Find the current product
-  const product = useMemo(() => {
-    return products.find(p => p.slug === productSlug)
-  }, [products, productSlug])
-
-  // Related products
-  const related = useMemo(() => {
-    if (!product) return []
-    return products
-      .filter(p => 
-        p.id !== product.id && 
-        p.categories.some(c => product.categories.some(pc => pc.slug === c.slug))
-      )
-      .slice(0, 3)
-      .map(p => ({
-        slug: p.slug,
-        category: p.categories[0]?.slug || 'all',
-        name: p.name,
-        image: p.images[0]?.src || '',
-        model: p.attributes.find(a => a.name.toLowerCase().includes('model'))?.options[0] || p.name.split(' ').pop() || '',
-        size: p.attributes.find(a => a.name.toLowerCase() === 'size')?.options[0] || '',
-        display: p.attributes.find(a => a.name.toLowerCase().includes('digit') || a.name.toLowerCase().includes('display'))?.options[0] || '',
-        input: p.attributes.find(a => a.name.toLowerCase().includes('input'))?.options[0] || '',
-        short_description: p.short_description
-      }))
-  }, [products, product])
+  }, [productId, productSlug])
 
   // Mapping WooCommerce data to UI needs
   const uiProduct = useMemo(() => {
@@ -255,6 +245,12 @@ export default function ProductDetailPage() {
             {/* RIGHT: Header + Tabs + Cards */}
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
+                {product.featured && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-3 py-1.5 text-xs font-bold text-white shadow-sm">
+                    <Star className="h-3.5 w-3.5 fill-white" />
+                    Featured
+                  </span>
+                )}
                 <span className="font-mono text-sm font-bold text-brand-orange bg-orange-50 rounded-lg px-3 py-1.5">{uiProduct.model}</span>
                 {uiProduct.name.toLowerCase() !== uiProduct.model.toLowerCase() && (
                   <span className="text-sm font-bold text-dark">{uiProduct.name}</span>
@@ -472,8 +468,8 @@ export default function ProductDetailPage() {
                   className="group flex flex-col bg-white border hover:shadow-2xl transition-all duration-500 overflow-hidden rounded-2xl border-gray-100"
                 >
                   {/* Image Section */}
-                  <Link
-                    href={`/products/${rel.category}/${rel.slug}`}
+                  <a
+                    href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
                     className="relative w-full h-[220px] overflow-hidden bg-white group-hover:bg-gray-50/30 transition-colors duration-500"
                   >
                     {rel.image ? (
@@ -489,17 +485,17 @@ export default function ProductDetailPage() {
                         <span className="font-bold text-[10px] text-gray-200 uppercase tracking-widest">I-Therm</span>
                       </div>
                     )}
-                  </Link>
+                  </a>
 
                   {/* Content Section */}
                   <div className="p-6 flex flex-col flex-1 border-t border-gray-50">
                     <div className="text-center mb-6">
-                      <Link
-                        href={`/products/${rel.category}/${rel.slug}`}
+                      <a
+                        href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
                         className="text-lg font-bold text-[#0070bc] hover:text-dark transition-colors duration-300 block leading-snug"
                       >
                         {rel.name}
-                      </Link>
+                      </a>
                       <span className="inline-block mt-2 font-mono text-[10px] font-bold text-gray-400 tracking-widest uppercase">{rel.model}</span>
                     </div>
                     
@@ -531,12 +527,12 @@ export default function ProductDetailPage() {
                     </div>
 
                     <div className="mt-auto">
-                      <Link
-                        href={`/products/${rel.category}/${rel.slug}`}
+                      <a
+                        href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
                         className="btn-premium btn-black-to-orange flex items-center justify-center gap-2 w-full py-4 text-[11px] font-bold uppercase tracking-[0.2em] rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
                       >
                         View Technical Data
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </div>

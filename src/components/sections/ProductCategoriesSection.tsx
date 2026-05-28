@@ -4,11 +4,11 @@ import { ArrowRight } from 'lucide-react'
 
 const categories = [
   {
-    slug: 'temperature-controllers',
+    slug: 'temperature-controller',
     name: 'Temperature Controllers',
     description: 'Precision PID & ON/OFF controllers for critical industrial processes. Trusted for accuracy since 1996.',
     image: 'https://itherm.co.in/wp-content/uploads/2025/01/1-Digital-Temp-Contro.jpg',
-    href: '/products?category=temperature-controllers',
+    href: '/products?category=temperature-controller',
     count: '24+ Models'
   },
   {
@@ -20,11 +20,11 @@ const categories = [
     count: '12+ Models'
   },
   {
-    slug: 'process-controllers',
+    slug: 'process-controller',
     name: 'Process Controller',
     description: 'Advanced process controllers and indicators for precise measurement and automation of industrial parameters.',
     image: 'https://itherm.co.in/wp-content/uploads/2024/12/Cx-928-1-300x300.jpg',
-    href: '/products?category=process-controllers',
+    href: '/products?category=process-controller',
     count: '15+ Models'
   }
 ]

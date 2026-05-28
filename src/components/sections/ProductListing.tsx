@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
-import { Search, X, Loader2, ChevronLeft, ChevronRight, Filter } from 'lucide-react'
+import { Search, X, Loader2, ChevronLeft, ChevronRight, Filter, Star } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { fetchWoo, getMappedAttributes } from '@/lib/api/woo'
+import { fetchCachedJson } from '@/lib/api/client-cache'
 import { PageHeroSection } from '@/components/sections/PageHeroSection'
 
 interface Product {
@@ -17,13 +16,14 @@ interface Product {
   categories: { id: number; name: string; slug: string }[]
   attributes: { name: string; options: string[] }[]
   short_description: string
+  featured?: boolean
 }
 
 interface Attribute {
   id: number
   name: string
   slug: string
-  terms: { name: string; slug: string }[]
+  terms: { name: string; slug: string; count?: number }[]
 }
 
 // Unified normalization for engineering data and filters
@@ -37,76 +37,99 @@ const normalize = (s: string) => {
     .trim();
 };
 
+const getTermsFromParams = (params: URLSearchParams) => {
+  const terms = params.get('terms')?.split(',').filter(Boolean) || []
+  const singleTerm = params.get('term')
+  const finalTerms = [...terms]
+
+  if (singleTerm && !finalTerms.some(t => normalize(t) === normalize(singleTerm))) {
+    finalTerms.push(singleTerm)
+  }
+
+  return finalTerms
+}
+
+const areTermsEqual = (a: string[], b: string[]) => {
+  if (a.length !== b.length) return false
+  return a.every((term, index) => normalize(term) === normalize(b[index]))
+}
+
 export function ProductListing() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const fetchInitiated = useRef(false)
+  const initialTerms = useMemo(() => getTermsFromParams(searchParams), [searchParams])
   
   const [products, setProducts] = useState<Product[]>([])
   const [attributes, setAttributes] = useState<Attribute[]>([])
   const [loading, setLoading] = useState(true)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const [serverTotalPages, setServerTotalPages] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category'))
-  const [selectedTerms, setSelectedTerms] = useState<string[]>(searchParams.get('term') ? [searchParams.get('term')!] : [])
+  const [selectedTerms, setSelectedTerms] = useState<string[]>(initialTerms)
   
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 12
+  const itemsPerPage = 9
 
   useEffect(() => {
-    if (fetchInitiated.current) return
-    fetchInitiated.current = true
+    const loadAttributes = async () => {
+      try {
+        const data = await fetchCachedJson<Attribute[]>('/api/attributes')
+        if (Array.isArray(data)) {
+          setAttributes(data)
+        }
+      } catch (error) {
+        console.error('Error loading attributes:', error)
+      }
+    }
 
-    const loadData = async () => {
+    loadAttributes()
+  }, [])
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        per_page: String(itemsPerPage),
+      })
+
+      if (selectedCategory) params.set('category', selectedCategory)
+      if (selectedTerms.length > 0) params.set('terms', selectedTerms.join(','))
+      if (searchQuery.trim()) params.set('search', searchQuery.trim())
+
       try {
         setLoading(true)
-        
-        // 1. Initial Quick Load (attributes + partial products)
-        const [attrRes, initialRes] = await Promise.all([
-          fetch('/api/attributes'),
-          fetch('/api/products?initial=true')
-        ])
-        
-        const attrData = await attrRes.json()
-        const initialProducts = await initialRes.json()
-        
-        setAttributes(attrData)
-        setProducts(initialProducts)
-        
-        // 2. Full Catalog Load - We wait for this before hiding loader 
-        // as per user request for "fully loaded" data
-        const fullRes = await fetch('/api/products')
-        const fullProducts = await fullRes.json()
-        
-        if (Array.isArray(fullProducts) && fullProducts.length > 0) {
-          setProducts(fullProducts)
-        }
-        
-        // Ensure smooth transition with a tiny buffer
-        setTimeout(() => setLoading(false), 400)
+        const data = await fetchCachedJson<{
+          products?: Product[]
+          total?: number
+          totalPages?: number
+        }>(`/api/products?${params.toString()}`)
+
+        const nextProducts = Array.isArray(data) ? data : data.products || []
+        setProducts(nextProducts)
+        setTotalProducts(Array.isArray(data) ? nextProducts.length : data.total || nextProducts.length)
+        setServerTotalPages(Array.isArray(data) ? 1 : data.totalPages || 1)
       } catch (error) {
         console.error('Error loading catalog:', error)
+        setProducts([])
+        setTotalProducts(0)
+        setServerTotalPages(1)
+      } finally {
         setLoading(false)
       }
     }
 
-    loadData()
-  }, [])
+    loadProducts()
+  }, [currentPage, itemsPerPage, searchQuery, selectedCategory, selectedTerms])
 
   useEffect(() => {
     const category = searchParams.get('category')
-    const terms = searchParams.get('terms')?.split(',') || []
-    const singleTerm = searchParams.get('term')
-    const finalTerms = [...terms]
-    
-    // Ensure all terms are normalized when checking for duplicates
-    if (singleTerm && !finalTerms.some(t => normalize(t) === normalize(singleTerm))) {
-      finalTerms.push(singleTerm)
-    }
-    
-    setSelectedCategory(category)
-    setSelectedTerms(finalTerms)
-    setCurrentPage(1)
+    const finalTerms = getTermsFromParams(searchParams)
+
+    setSelectedCategory(prev => prev === category ? prev : category)
+    setSelectedTerms(prev => areTermsEqual(prev, finalTerms) ? prev : finalTerms)
+    setCurrentPage(prev => prev === 1 ? prev : 1)
   }, [searchParams])
 
   // 1. First, compute the base filtered products (only by search and category)
@@ -249,6 +272,21 @@ export function ProductListing() {
     
     preferredOrder.forEach(name => filterMap.set(name, new Set()));
 
+    const selectedSlugNorm = selectedCategory ? normalize(selectedCategory) : null;
+    const currentCatData = selectedSlugNorm ? attributes.find(a => 
+      normalize(a.slug) === selectedSlugNorm || 
+      normalize(a.name) === selectedSlugNorm
+    ) : null;
+
+    // Keep Series stable for the selected category. Product results are now
+    // paginated/filtered by the server, so deriving Series only from products
+    // would hide sibling terms like Data Logger when Auto Clave is selected.
+    currentCatData?.terms.forEach(term => {
+      if (term.name !== 'Discontinued') {
+        filterMap.get('Series')!.add(term.name);
+      }
+    });
+
     // Always use ALL products in the current category to find potential filters
     categoryProducts.forEach(product => {
       // 1. Extract Series
@@ -303,11 +341,23 @@ export function ProductListing() {
             slug: opt
           }))
       }));
-  }, [categoryProducts, selectedCategory, attributes]);
+  }, [attributes, categoryProducts, selectedCategory]);
 
   // 4. Robust Counting for Filter Visibility
   const filterCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
+
+    const selectedSlugNorm = selectedCategory ? normalize(selectedCategory) : null;
+    const currentCatData = selectedSlugNorm ? attributes.find(a => 
+      normalize(a.slug) === selectedSlugNorm || 
+      normalize(a.name) === selectedSlugNorm
+    ) : null;
+
+    currentCatData?.terms.forEach(term => {
+      const count = typeof (term as any).count === 'number' ? (term as any).count : 0;
+      counts[normalize(term.name)] = count;
+      counts[normalize(term.slug)] = count;
+    });
     
     // Count based on the products matching the CURRENT selection
     filteredProducts.forEach(product => {
@@ -327,13 +377,35 @@ export function ProductListing() {
       });
     });
     return counts;
-  }, [filteredProducts]);
+  }, [attributes, filteredProducts, selectedCategory]);
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const totalPages = serverTotalPages
   const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredProducts.slice(start, start + itemsPerPage)
-  }, [filteredProducts, currentPage])
+    return filteredProducts
+  }, [filteredProducts])
+  const paginationItems = useMemo(() => {
+    const items: Array<number | 'ellipsis-start' | 'ellipsis-end'> = []
+
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+
+    items.push(1)
+
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+
+    if (start > 2) items.push('ellipsis-start')
+
+    for (let page = start; page <= end; page += 1) {
+      items.push(page)
+    }
+
+    if (end < totalPages - 1) items.push('ellipsis-end')
+
+    items.push(totalPages)
+    return items
+  }, [currentPage, totalPages])
 
   const toggleTerm = (term: string) => {
     const termNorm = normalize(term);
@@ -515,7 +587,7 @@ export function ProductListing() {
                   Filtered Results
                 </p>
                 <h2 className="text-[15px] font-bold text-dark">
-                  Showing <span className="text-[#0070bc] font-black">{filteredProducts.length}</span> Precision {filteredProducts.length === 1 ? 'Instrument' : 'Instruments'}
+                  Showing <span className="text-[#0070bc] font-black">{paginatedProducts.length}</span> of <span className="text-[#0070bc] font-black">{totalProducts}</span> Precision {totalProducts === 1 ? 'Instrument' : 'Instruments'}
                   {searchQuery && <span className="text-gray-400 font-medium"> matching &quot;{searchQuery}&quot;</span>}
                 </h2>
               </div>
@@ -556,8 +628,8 @@ export function ProductListing() {
                     className="group flex flex-col bg-white border hover:shadow-2xl transition-all duration-500 overflow-hidden border-round"
                   >
                     {/* Image Section - Fixed Height to ensure consistency */}
-                    <Link
-                      href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                    <a
+                      href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                       className="relative w-full overflow-hidden bg-white group-hover:bg-gray-50/50 transition-colors duration-500 height-190"
                     >
                       {product.images[0] ? (
@@ -573,17 +645,23 @@ export function ProductListing() {
                           <span className="font-bold text-[10px] text-gray-200 uppercase tracking-widest">I-Therm</span>
                         </div>
                       )}
-                    </Link>
+                      {product.featured && (
+                        <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-white shadow-sm">
+                          <Star className="h-3 w-3 fill-white" />
+                          Featured
+                        </span>
+                      )}
+                    </a>
   
                     {/* Content Section */}
                     <div className="p-4 flex flex-col flex-1 border-t border-gray-50">
                       <div className="text-center mb-6">
-                        <Link
-                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                        <a
+                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                           className="text-[16px] font-bold text-[#0070bc] hover:text-dark transition-colors duration-300 block leading-snug"
                         >
                           {product.name}
-                        </Link>
+                        </a>
                       </div>
                       
                       <div className="space-y-3 mb-8">
@@ -614,12 +692,12 @@ export function ProductListing() {
                       </div>
 
                       <div className="mt-auto">
-                        <Link
-                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                        <a
+                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                           className="btn-premium btn-black-to-orange flex items-center justify-center gap-2 w-full py-3.5 text-[11px] font-bold uppercase tracking-[0.2em] rounded-lg shadow-lg"
                         >
                           View Details
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -654,20 +732,33 @@ export function ProductListing() {
               </button>
               
               <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={cn(
-                      "h-10 px-5 rounded-xl text-[11px] font-black transition-all duration-300",
-                      currentPage === i + 1
-                        ? "bg-white text-[#0070bc] shadow-md border border-gray-100"
-                        : "text-gray-400 hover:text-dark"
-                    )}
-                  >
-                    {String(i + 1).padStart(2, '0')}
-                  </button>
-                ))}
+                {paginationItems.map((item) => {
+                  if (typeof item !== 'number') {
+                    return (
+                      <span
+                        key={item}
+                        className="flex h-10 min-w-8 items-center justify-center px-1 text-[11px] font-black text-gray-300"
+                      >
+                        ...
+                      </span>
+                    )
+                  }
+
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      className={cn(
+                        "h-10 min-w-10 px-4 rounded-xl text-[11px] font-black transition-all duration-300",
+                        currentPage === item
+                          ? "bg-white text-[#0070bc] shadow-md border border-gray-100"
+                          : "text-gray-400 hover:text-dark"
+                      )}
+                    >
+                      {String(item).padStart(2, '0')}
+                    </button>
+                  )
+                })}
               </div>
 
               <button

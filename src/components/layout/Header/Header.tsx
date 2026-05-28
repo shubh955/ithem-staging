@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, Phone, ChevronDown, Search, Mail, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { getMappedAttributes } from '@/lib/api/woo'
+import { fetchCachedJson } from '@/lib/api/client-cache'
 import { NAV_ITEMS, type NavChild } from './nav.config'
 import { SITE_CONFIG } from '@/lib/utils/constants'
 
@@ -27,8 +27,7 @@ export function Header() {
   useEffect(() => {
     const fetchAttributes = async () => {
       try {
-        const res = await fetch('/api/attributes')
-        const data = await res.json()
+        const data = await fetchCachedJson<any[]>('/api/attributes')
         if (Array.isArray(data)) {
           setAttributes(data)
         }
@@ -39,10 +38,11 @@ export function Header() {
 
     const fetchAllProducts = async () => {
       try {
-        const res = await fetch('/api/products')
-        const data = await res.json()
+        const data = await fetchCachedJson<{ products?: any[] }>('/api/products?initial=true')
         if (Array.isArray(data)) {
           setAllProducts(data)
+        } else if (Array.isArray(data.products)) {
+          setAllProducts(data.products)
         }
       } catch (err) {
         console.error('Failed to fetch products:', err)
@@ -54,16 +54,30 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    if (searchQuery.trim().length > 0) {
-      const filtered = allProducts.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.categories.some((c: any) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      ).slice(0, 6)
-      setSearchResults(filtered)
-    } else {
+    const query = searchQuery.trim()
+
+    if (query.length === 0) {
       setSearchResults([])
+      return
     }
-  }, [searchQuery, allProducts])
+
+    const loadSearchResults = async () => {
+      try {
+        const params = new URLSearchParams({
+          search: query,
+          per_page: '6',
+          page: '1',
+        })
+        const data = await fetchCachedJson<{ products?: any[] }>(`/api/products?${params.toString()}`)
+        setSearchResults(Array.isArray(data) ? data.slice(0, 6) : data.products || [])
+      } catch (err) {
+        console.error('Failed to search products:', err)
+        setSearchResults([])
+      }
+    }
+
+    loadSearchResults()
+  }, [searchQuery])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -232,7 +246,7 @@ export function Header() {
                                   <ul className="space-y-1">
                                     {col.items.map((child) => (
                                       <li key={child.href}>
-                                        <Link
+                                        <a
                                           href={child.href}
                                           className="group/link block rounded-xl px-2.5 py-1.5 transition-all hover:bg-orange-50"
                                           onMouseEnter={() => setHoveredItem(child)}
@@ -244,7 +258,7 @@ export function Header() {
                                             </span>
                                             <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
                                           </div>
-                                        </Link>
+                                        </a>
                                       </li>
                                     ))}
                                   </ul>
@@ -288,9 +302,9 @@ export function Header() {
                         <div className="space-y-1">
                           <p className="px-3 py-2 text-[14px] font-bold uppercase tracking-[0.15em] text-brand-orange border-b border-gray-50 mb-1">Search Results</p>
                           {searchResults.map((product) => (
-                            <Link
+                            <a
                               key={product.id}
-                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                               onClick={() => {
                                 setShowSearch(false)
                                 setSearchQuery('')
@@ -311,7 +325,7 @@ export function Header() {
                                   {product.categories.map((c: any) => c.name).join(', ')}
                                 </p>
                               </div>
-                            </Link>
+                            </a>
                           ))}
                         </div>
                       ) : (
@@ -321,9 +335,9 @@ export function Header() {
                             <p className="mb-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 text-left px-1">Recommended Products</p>
                             <div className="space-y-1">
                               {defaultProducts.map((product) => (
-                                <Link
+                                <a
                                   key={product.id}
-                                  href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                                  href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                                   onClick={() => {
                                     setShowSearch(false)
                                     setSearchQuery('')
@@ -334,7 +348,7 @@ export function Header() {
                                     <Image src={product.images[0]?.src || '/logo.png'} alt={product.name} fill className="object-contain p-1" />
                                   </div>
                                   <span className="text-xs font-semibold text-gray-700 truncate">{product.name}</span>
-                                </Link>
+                                </a>
                               ))}
                             </div>
                           </div>
@@ -345,9 +359,9 @@ export function Header() {
                         <p className="px-3 py-2 text-[14px] font-bold uppercase tracking-[0.15em] text-brand-orange border-b border-gray-50 mb-1">Featured Products</p>
                         <div className="space-y-1">
                           {defaultProducts.map((product) => (
-                            <Link
+                            <a
                               key={product.id}
-                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}`}
+                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                               onClick={() => {
                                 setShowSearch(false)
                                 setSearchQuery('')
@@ -368,7 +382,7 @@ export function Header() {
                                   {product.categories.map((c: any) => c.name).join(', ')}
                                 </p>
                               </div>
-                            </Link>
+                            </a>
                           ))}
                         </div>
                       </div>
@@ -463,14 +477,14 @@ export function Header() {
                             <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-orange-100 pl-3">
                               {displayItem.children.flatMap((col) =>
                                 col.items.map((child) => (
-                                  <Link
+                                  <a
                                     key={child.href}
                                     href={child.href}
                                     onClick={() => setMobileOpen(false)}
                                     className="block rounded-lg px-2 py-2 text-sm text-gray-600 hover:text-brand-orange"
                                   >
                                     {child.label}
-                                  </Link>
+                                  </a>
                                 ))
                               )}
                             </div>
