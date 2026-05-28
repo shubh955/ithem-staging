@@ -282,7 +282,7 @@ export function ProductListing() {
     // paginated/filtered by the server, so deriving Series only from products
     // would hide sibling terms like Data Logger when Auto Clave is selected.
     currentCatData?.terms.forEach(term => {
-      if (term.name !== 'Discontinued') {
+      if (term.name !== 'Discontinued' && (typeof term.count !== 'number' || term.count > 0)) {
         filterMap.get('Series')!.add(term.name);
       }
     });

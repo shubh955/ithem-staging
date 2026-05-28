@@ -6,8 +6,65 @@ import Image from 'next/image'
 import { Menu, X, Phone, ChevronDown, Search, Mail, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { fetchCachedJson } from '@/lib/api/client-cache'
-import { NAV_ITEMS, type NavChild } from './nav.config'
-import { SITE_CONFIG } from '@/lib/utils/constants'
+import { NAV_ITEMS, type NavChild, type NavColumn, type NavItem } from './nav.config'
+
+type MenuTerm = {
+  id?: number
+  name: string
+  slug: string
+  description?: string
+  count?: number
+}
+
+type MenuCategory = {
+  id: number
+  name: string
+  slug: string
+  terms?: MenuTerm[]
+}
+
+const cleanLabel = (value: string) => value
+  .replace(/&amp;/g, '&')
+  .replace(/&quot;/g, '"')
+  .replace(/\bMultifun\b/g, 'Multifunction')
+
+const sortByLabel = <T extends { name: string }>(items: T[]) =>
+  [...items].sort((a, b) => cleanLabel(a.name).localeCompare(cleanLabel(b.name), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  }))
+
+const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[]): NavColumn[] => {
+  return sortByLabel(categories)
+    .map((cat) => {
+      const heading = cleanLabel(cat.name)
+      const validTerms = (cat.terms || []).filter(term => typeof term.count !== 'number' || term.count > 0)
+      const terms = sortByLabel(validTerms)
+
+      return {
+        heading,
+        headingHref: `/products?category=${cat.slug}`,
+        items: terms.map((term) => ({
+          label: cleanLabel(term.name),
+          href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.slug || term.name)}`,
+          description: term.description || `High-quality ${cleanLabel(term.name)} solutions for industrial process control.`,
+          image: item.defaultImage,
+        })),
+      }
+    })
+}
+
+const getGridColumnsClass = (count: number) => {
+  if (count >= 4) return 'grid-cols-4'
+  if (count === 3) return 'grid-cols-3'
+  if (count === 2) return 'grid-cols-2'
+  return 'grid-cols-1'
+}
+
+const getProductGridColumnsClass = (count: number) => {
+  if (count >= 4) return 'grid-cols-4'
+  return getGridColumnsClass(count)
+}
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -15,7 +72,8 @@ export function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null)
   const [hoveredItem, setHoveredItem] = useState<NavChild | null>(null)
-  const [attributes, setAttributes] = useState<any[]>([])
+  const [attributes, setAttributes] = useState<MenuCategory[]>([])
+  const [productsMenuLoading, setProductsMenuLoading] = useState(true)
   
   // Search states
   const [searchQuery, setSearchQuery] = useState('')
@@ -27,12 +85,14 @@ export function Header() {
   useEffect(() => {
     const fetchAttributes = async () => {
       try {
-        const data = await fetchCachedJson<any[]>('/api/attributes')
+        const data = await fetchCachedJson<MenuCategory[]>('/api/attributes')
         if (Array.isArray(data)) {
           setAttributes(data)
         }
       } catch (err) {
         console.error('Failed to fetch attributes:', err)
+      } finally {
+        setProductsMenuLoading(false)
       }
     }
 
@@ -140,53 +200,23 @@ export function Header() {
           <nav className="hidden items-center gap-0.5 lg:flex self-stretch">
             {NAV_ITEMS.map((item) => {
               const displayItem = { ...item }
-              if (item.label === 'Products' && attributes.length > 0) {
-                displayItem.children = attributes
-                  .filter(cat => cat.name !== 'Discontinued')
-                  .map(cat => {
-                  const activeTerms = cat.terms.filter((t: any) => t.count !== 0 && t.name !== 'Discontinued');
-                  const heading = cat.name.replace(/&amp;/g, '&').replace(/\bMultifun\b/g, 'Multifunction');
-                  
-                  let items = activeTerms.map((term: any) => ({
-                    label: term.name,
-                    href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.name)}`,
-                    description: term.description || `High-quality ${term.name} solutions for industrial process control.`,
-                    image: item.defaultImage
-                  }));
-
-                  // Manual Additions for Transmitters
-                  if (heading.toLowerCase().includes('transmitter')) {
-                    items.push({
-                      label: 'Head Mounted',
-                      href: '/products/transmitters/tr-213',
-                      description: 'Advanced TR-213 head-mounted temperature transmitter.',
-                      image: item.defaultImage
-                    });
-                  }
-
-                  return {
-                    heading: heading,
-                    items: items.length > 0 ? items : [{
-                      label: `All ${heading}`,
-                      href: `/products?category=${cat.slug}`,
-                      description: `Explore our complete range of ${heading}.`,
-                      image: item.defaultImage
-                    }]
-                  };
-                })
+              const isProductsMenu = item.label === 'Products'
+              if (isProductsMenu && attributes.length > 0) {
+                displayItem.children = getProductsMenuColumns(item, attributes)
               }
+              const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
 
               return (
                 <div
                   key={item.label}
                   className="flex items-center h-full padd-control"
-                  onMouseEnter={() => displayItem.children && setActiveMenu(item.label)}
+                  onMouseEnter={() => hasMegaMenu && setActiveMenu(item.label)}
                   onMouseLeave={() => setActiveMenu(null)}
                 >
                   {item.href ? (
                     <Link href={item.href} className={navLinkClass}>
                       {item.label}
-                      {displayItem.children && (
+                      {hasMegaMenu && (
                         <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', activeMenu === item.label && 'rotate-180')} />
                       )}
                     </Link>
@@ -198,7 +228,7 @@ export function Header() {
                   )}
 
                   {/* Mega Menu */}
-                  {displayItem.children && activeMenu === item.label && (
+                  {hasMegaMenu && activeMenu === item.label && (
                     <div
                       className="absolute left-0 right-0 top-[calc(100%-2px)] z-50 bg-white border-b border-gray-100 shadow-2xl"
                       onMouseEnter={() => setActiveMenu(item.label)}
@@ -207,53 +237,105 @@ export function Header() {
                         setHoveredItem(null)
                       }}
                     >
-                      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                        <div className="flex items-start gap-8">
+                      <div className={cn(
+                        "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
+                        isProductsMenu ? "py-5" : "py-8"
+                      )}>
+                        <div className={cn("flex items-start", isProductsMenu ? "gap-6" : "gap-8")}>
                           {/* Left: Preview Card (Sticky) */}
-                          <div className="w-[300px] shrink-0 border-r border-gray-100 pr-8 sticky top-0 self-start">
-                            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-lg bg-gray-50">
+                          <div className={cn(
+                            "shrink-0 sticky top-0 self-start",
+                            isProductsMenu
+                              ? "w-[220px] border-r border-gray-100 pr-5"
+                              : "w-[300px] border-r border-gray-100 pr-8"
+                          )}>
+                            <div className={cn(
+                              "relative overflow-hidden bg-gray-50",
+                              isProductsMenu ? "aspect-[16/10] rounded-xl shadow-md" : "aspect-[4/3] rounded-2xl shadow-lg"
+                            )}>
                               <Image
                                 src={hoveredItem?.image || item.defaultImage || '/logo.png'}
                                 alt={hoveredItem?.label || item.label}
                                 fill
                                 className="object-cover transition-all duration-700 hover:scale-110"
-                                sizes="300px"
+                                sizes={isProductsMenu ? "220px" : "300px"}
                               />
                             </div>
-                            <div className="mt-5">
-                              <h4 className="text-base font-bold text-dark truncate">
+                            <div className={cn(isProductsMenu ? "mt-3" : "mt-5")}>
+                              <h4 className={cn(
+                                "font-bold text-dark truncate",
+                                isProductsMenu ? "text-sm" : "text-base"
+                              )}>
                                 {hoveredItem?.label || item.label}
                               </h4>
-                              <p className="mt-2 text-sm text-gray-500 leading-relaxed min-h-[80px]">
+                              <p className={cn(
+                                "mt-2 text-gray-500 overflow-hidden",
+                                isProductsMenu ? "max-h-[60px] text-xs leading-5" : "min-h-[80px] text-sm leading-relaxed"
+                              )}>
                                 {hoveredItem?.description || 'Innovative Instruments & Controls LLP (I-Therm) — foremost manufacturer of process control instruments since 1996.'}
                               </p>
                             </div>
                           </div>
 
                           {/* Right: Nav Links (Scrollable) */}
-                          <div className="flex-1 max-h-[70vh] overflow-y-auto pl-8 custom-scrollbar">
-                            <div className={cn(
-                              "grid gap-y-10 gap-x-8",
-                              displayItem.children.length > 4 ? "grid-cols-3" : `grid-cols-${displayItem.children.length}`
+                          <div className={cn(
+                            "flex-1 custom-scrollbar",
+                            isProductsMenu
+                              ? "max-h-[calc(100vh-130px)] overflow-y-auto"
+                              : "max-h-[70vh] overflow-y-auto pl-8"
+                          )}>
+                            {isProductsMenu && productsMenuLoading ? (
+                              <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
+                                <Loader2 className="h-7 w-7 animate-spin text-brand-orange" />
+                                <p className="mt-4 text-sm font-semibold text-gray-700">Loading product categories...</p>
+                                <p className="mt-1 text-xs text-gray-400">Syncing latest WooCommerce menu</p>
+                              </div>
+                            ) : displayItem.children && displayItem.children.length > 0 ? (
+                              <div className={cn(
+                              "grid",
+                              isProductsMenu ? "gap-y-6 gap-x-7" : "gap-y-10 gap-x-8",
+                              isProductsMenu
+                                ? getProductGridColumnsClass(displayItem.children.length)
+                                : getGridColumnsClass(displayItem.children.length)
                             )}>
                               {displayItem.children.map((col, ci) => (
                                 <div key={ci}>
-                                  {col.heading && (
-                                    <p className="mb-3 text-[14px] font-bold uppercase tracking-[0.15em] text-brand-orange border-b border-brand-orange/10 pb-1.5">
+                                  {col.heading && (col.headingHref ? (
+                                    <a
+                                      href={col.headingHref}
+                                      className={cn(
+                                        "block font-bold tracking-normal text-brand-orange transition-colors hover:text-orange-600",
+                                        isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
+                                      )}
+                                      onClick={() => setActiveMenu(null)}
+                                    >
+                                      {col.heading}
+                                    </a>
+                                  ) : (
+                                    <p className={cn(
+                                      "font-bold tracking-normal text-brand-orange",
+                                      isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
+                                    )}>
                                       {col.heading}
                                     </p>
-                                  )}
-                                  <ul className="space-y-1">
+                                  ))}
+                                  {col.items.length > 0 && <ul className={cn(isProductsMenu ? "space-y-0.5" : "space-y-1")}>
                                     {col.items.map((child) => (
                                       <li key={child.href}>
                                         <a
                                           href={child.href}
-                                          className="group/link block rounded-xl px-2.5 py-1.5 transition-all hover:bg-orange-50"
+                                          className={cn(
+                                            "group/link block transition-all hover:bg-orange-50",
+                                            isProductsMenu ? "rounded-lg px-1.5 py-0.5" : "rounded-xl px-2.5 py-1.5"
+                                          )}
                                           onMouseEnter={() => setHoveredItem(child)}
                                           onClick={() => setActiveMenu(null)}
                                         >
                                           <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold text-gray-700 group-hover/link:text-brand-orange">
+                                            <span className={cn(
+                                              "font-semibold text-gray-700 group-hover/link:text-brand-orange",
+                                              isProductsMenu ? "text-[13px] leading-6" : "text-sm"
+                                            )}>
                                               {child.label}
                                             </span>
                                             <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
@@ -261,10 +343,15 @@ export function Header() {
                                         </a>
                                       </li>
                                     ))}
-                                  </ul>
+                                  </ul>}
                                 </div>
                               ))}
-                            </div>
+                              </div>
+                            ) : (
+                              <div className="flex min-h-[220px] items-center justify-center text-sm font-semibold text-gray-500">
+                                Product categories are not available right now.
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -421,50 +508,15 @@ export function Header() {
               <div className="space-y-1">
                 {NAV_ITEMS.map((item) => {
                   const displayItem = { ...item }
-                  if (item.label === 'Products' && attributes.length > 0) {
-                    displayItem.children = attributes
-                      .filter(cat => cat.name !== 'Discontinued')
-                      .map(cat => {
-                      const activeTerms = cat.terms.filter((t: any) => t.count !== 0 && t.name !== 'Discontinued');
-                      const heading = cat.name.replace(/&amp;/g, '&').replace(/\bMultifun\b/g, 'Multifunction');
-
-                      let items = activeTerms.map((term: any) => ({
-                        label: term.name,
-                        href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.name)}`,
-                        description: term.description || `Explore ${term.name}`
-                      }));
-
-                      // Manual Additions for Transmitters
-                      if (heading.toLowerCase().includes('transmitter')) {
-                        items.push({
-                          label: 'Head Mounted',
-                          href: '/products/transmitters/tr-213',
-                          description: 'Advanced TR-213 head-mounted temperature transmitter.'
-                        });
-                      }
-
-                      return {
-                        heading: heading,
-                        items: items.length > 0 ? items : [{
-                          label: `All ${heading}`,
-                          href: `/products/${cat.slug}`,
-                          description: `Explore our complete range of ${heading}.`
-                        }]
-                      };
-                    })
+                  const isProductsMenu = item.label === 'Products'
+                  if (isProductsMenu && attributes.length > 0) {
+                    displayItem.children = getProductsMenuColumns(item, attributes)
                   }
+                  const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
 
                   return (
                     <div key={item.label}>
-                      {item.href ? (
-                        <Link
-                          href={item.href}
-                          onClick={() => setMobileOpen(false)}
-                          className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-brand-orange"
-                        >
-                          {item.label}
-                        </Link>
-                      ) : (
+                      {hasMegaMenu ? (
                         <>
                           <button
                             onClick={() => setExpandedMobile(expandedMobile === item.label ? null : item.label)}
@@ -473,23 +525,53 @@ export function Header() {
                             {item.label}
                             <ChevronDown className={cn('h-4 w-4 transition-transform', expandedMobile === item.label && 'rotate-180')} />
                           </button>
-                          {expandedMobile === item.label && displayItem.children && (
-                            <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-orange-100 pl-3">
-                              {displayItem.children.flatMap((col) =>
-                                col.items.map((child) => (
-                                  <a
-                                    key={child.href}
-                                    href={child.href}
-                                    onClick={() => setMobileOpen(false)}
-                                    className="block rounded-lg px-2 py-2 text-sm text-gray-600 hover:text-brand-orange"
-                                  >
-                                    {child.label}
-                                  </a>
-                                ))
+                          {expandedMobile === item.label && (
+                            <div className="ml-3 mt-1 space-y-3 border-l-2 border-orange-100 pl-3">
+                              {isProductsMenu && productsMenuLoading ? (
+                                <div className="flex items-center gap-2 px-2 py-3 text-sm font-semibold text-gray-500">
+                                  <Loader2 className="h-4 w-4 animate-spin text-brand-orange" />
+                                  Loading product categories...
+                                </div>
+                              ) : displayItem.children && displayItem.children.length > 0 ? displayItem.children.map((col) => (
+                                <div key={col.heading || col.items[0]?.href}>
+                                  {col.heading && (
+                                    <a
+                                      href={col.headingHref || '#'}
+                                      onClick={() => setMobileOpen(false)}
+                                      className="block rounded-lg px-2 py-1.5 text-sm font-bold text-brand-orange"
+                                    >
+                                      {col.heading}
+                                    </a>
+                                  )}
+                                  {col.items.map((child) => (
+                                    <a
+                                      key={child.href}
+                                      href={child.href}
+                                      onClick={() => setMobileOpen(false)}
+                                      className="block rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:text-brand-orange"
+                                    >
+                                      {child.label}
+                                    </a>
+                                  ))}
+                                </div>
+                              )) : (
+                                <div className="px-2 py-3 text-sm font-semibold text-gray-500">
+                                  Product categories are not available right now.
+                                </div>
                               )}
                             </div>
                           )}
                         </>
+                      ) : item.href ? (
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-brand-orange"
+                        >
+                          {item.label}
+                        </Link>
+                      ) : (
+                        null
                       )}
                     </div>
                   )
