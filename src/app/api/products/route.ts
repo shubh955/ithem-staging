@@ -8,7 +8,9 @@ const {
 } = WOOCOMMERCE_CONFIG
 
 const PRODUCTS_URL = `${WOOCOMMERCE_URL_BASE}/products`
-const CACHE_SECONDS = 86400
+const CACHE_SECONDS = 0
+
+export const dynamic = 'force-dynamic'
 
 function wooHeaders() {
   const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64')
@@ -36,7 +38,7 @@ async function findCategoryId(category: string, headers: HeadersInit) {
 
   const response = await fetch(`${WOOCOMMERCE_URL_BASE}/products/categories?${params}`, {
     headers,
-    next: { revalidate: CACHE_SECONDS },
+    cache: 'no-store',
   })
 
   if (!response.ok) return null
@@ -45,11 +47,11 @@ async function findCategoryId(category: string, headers: HeadersInit) {
   const normalized = category.toLowerCase()
   const match = Array.isArray(categories)
     ? categories.find(
-        (cat) =>
-          cat.slug?.toLowerCase() === normalized ||
-          cat.name?.toLowerCase() === normalized ||
-          cat.name?.toLowerCase().replace(/&amp;/g, '&') === normalized
-      )
+      (cat) =>
+        cat.slug?.toLowerCase() === normalized ||
+        cat.name?.toLowerCase() === normalized ||
+        cat.name?.toLowerCase().replace(/&amp;/g, '&') === normalized
+    )
     : null
 
   return match?.id ? String(match.id) : null
@@ -61,7 +63,7 @@ async function findAttributeFilter(terms: string[], headers: HeadersInit) {
 
   const attrResponse = await fetch(`${WOOCOMMERCE_URL_BASE}/products/attributes?per_page=100`, {
     headers,
-    next: { revalidate: 3600 },
+    cache: 'no-store',
   })
 
   if (!attrResponse.ok) return null
@@ -74,7 +76,7 @@ async function findAttributeFilter(terms: string[], headers: HeadersInit) {
       `${WOOCOMMERCE_URL_BASE}/products/attributes/${attr.id}/terms?per_page=100`,
       {
         headers,
-        next: { revalidate: 3600 },
+        cache: 'no-store',
       }
     )
 
@@ -128,7 +130,7 @@ export async function GET(request: Request) {
     if (id) {
       const response = await fetch(`${PRODUCTS_URL}/${id}`, {
         headers,
-        next: { revalidate: CACHE_SECONDS },
+        cache: 'no-store',
       })
 
       if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)
@@ -163,7 +165,7 @@ export async function GET(request: Request) {
 
     const response = await fetch(`${PRODUCTS_URL}?${params}`, {
       headers,
-      next: { revalidate: CACHE_SECONDS },
+      cache: 'no-store',
     })
 
     if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)

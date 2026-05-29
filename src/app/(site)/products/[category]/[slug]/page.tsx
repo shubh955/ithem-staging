@@ -23,6 +23,14 @@ interface ProductData {
   attributes: { name: string; options: string[] }[];
   downloads?: { name: string; file: string }[];
   featured?: boolean;
+  meta_data?: { key: string; value: string }[];
+  replacement_product?: {
+    id: number;
+    name: string;
+    slug: string;
+    price?: string;
+    image?: string;
+  };
 }
 
 export default function ProductDetailPage() {
@@ -94,7 +102,7 @@ export default function ProductDetailPage() {
 
     const extractResources = (p: any) => {
       const resources: { label: string; url: string; sub: string }[] = []
-      
+
       // 1. Native WooCommerce Downloads
       if (p.downloads && Array.isArray(p.downloads)) {
         p.downloads.forEach((d: any) => {
@@ -112,16 +120,16 @@ export default function ProductDetailPage() {
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const downloadSection = doc.querySelector('.download-tab-list, #tab-3, .download-section')
         const targets = downloadSection ? downloadSection.querySelectorAll('a') : doc.querySelectorAll('a')
-        
+
         targets.forEach(a => {
           const text = a.textContent?.trim() || ''
           const href = a.getAttribute('href') || ''
-          const isResource = text.toLowerCase().includes('data sheet') || 
-                            text.toLowerCase().includes('manual') || 
-                            text.toLowerCase().includes('download') ||
-                            href.includes('.pdf') || 
-                            href.includes('/ds-') || 
-                            href.includes('/oim-')
+          const isResource = text.toLowerCase().includes('data sheet') ||
+            text.toLowerCase().includes('manual') ||
+            text.toLowerCase().includes('download') ||
+            href.includes('.pdf') ||
+            href.includes('/ds-') ||
+            href.includes('/oim-')
 
           if (isResource && href && !resources.find(r => r.url === href)) {
             resources.push({
@@ -141,6 +149,19 @@ export default function ProductDetailPage() {
     const size = product.attributes.find(a => a.name.toLowerCase().includes('size'))?.options[0] || ''
     const type = product.categories[0]?.name || ''
     const approvals = product.attributes.find(a => a.name.toLowerCase().includes('approval') || a.name.toLowerCase().includes('cert'))?.options || []
+
+    // Extract YouTube video URL from meta_data
+    const rawVideoUrl = product.meta_data?.find(m => m.key === '_video_url')?.value || ''
+    let videoEmbedUrl: string | null = null
+    if (rawVideoUrl && rawVideoUrl.includes('youtube.com/watch')) {
+      try {
+        const videoId = new URL(rawVideoUrl).searchParams.get('v')
+        if (videoId) videoEmbedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
+      } catch { /* ignore */ }
+    } else if (rawVideoUrl && rawVideoUrl.includes('youtu.be/')) {
+      const videoId = rawVideoUrl.split('youtu.be/')[1]?.split('?')[0]
+      if (videoId) videoEmbedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
+    }
 
     return {
       name: product.name,
@@ -163,7 +184,9 @@ export default function ProductDetailPage() {
       categoryName: product.categories[0]?.name || 'Products',
       category: product.categories[0]?.slug || 'all',
       approvals,
-      resources
+      resources,
+      videoEmbedUrl,
+      replacement_product: product.replacement_product
     }
   }, [product])
 
@@ -172,8 +195,8 @@ export default function ProductDetailPage() {
     if (!uiProduct || !tables.length) return null
     // Clean model for matching
     const modelKey = uiProduct.model.toLowerCase().trim()
-    return tables.find(t => 
-      t.name.toLowerCase().includes(modelKey) || 
+    return tables.find(t =>
+      t.name.toLowerCase().includes(modelKey) ||
       modelKey.includes(t.name.toLowerCase()) ||
       uiProduct.name.toLowerCase().includes(t.name.toLowerCase())
     )
@@ -220,7 +243,7 @@ export default function ProductDetailPage() {
                 productName={uiProduct.name}
               />
 
-              <div 
+              <div
                 className="rounded-2xl bg-gray-50/50 p-5"
                 style={{ border: '1px solid #00000014' }}
               >
@@ -251,21 +274,43 @@ export default function ProductDetailPage() {
                     Featured
                   </span>
                 )}
+                {uiProduct.replacement_product && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-bold text-red-700 shadow-sm border border-red-200">
+                    Discontinued
+                  </span>
+                )}
                 <span className="font-mono text-sm font-bold text-brand-orange bg-orange-50 rounded-lg px-3 py-1.5">{uiProduct.model}</span>
                 {uiProduct.name.toLowerCase() !== uiProduct.model.toLowerCase() && (
                   <span className="text-sm font-bold text-dark">{uiProduct.name}</span>
                 )}
               </div>
 
+              {uiProduct.replacement_product && (
+                <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-5 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-32 w-32 bg-red-500 opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                  <h3 className="text-red-800 font-bold text-lg mb-2 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                    Model Discontinued
+                  </h3>
+                  <p className="text-red-700/80 text-sm mb-4">This product has been discontinued and replaced by a newer model.</p>
+                  <Link
+                    href={`/products/replacement/${uiProduct.replacement_product.slug}?id=${uiProduct.replacement_product.id}`}
+                    className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest shadow-md transition-colors"
+                  >
+                    View Replacement: {uiProduct.replacement_product.name}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              )}
+
               {/* Tabs Navigation */}
               <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
-                {(['features', 'specs', 'applications'] as Tab[]).map((tab) => (
+                {(['features', 'specs'] as Tab[]).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 rounded-lg py-2.5 text-sm font-bold capitalize transition-all ${
-                      activeTab === tab ? 'bg-white text-dark shadow-sm' : 'text-gray-400 hover:text-dark'
-                    }`}
+                    className={`flex-1 rounded-lg py-2.5 text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white text-dark shadow-sm' : 'text-gray-400 hover:text-dark'
+                      }`}
                   >
                     {tab === 'features' ? 'Key Features' : tab === 'specs' ? 'Specifications' : 'Applications'}
                   </button>
@@ -273,7 +318,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Tab Content with Scroller */}
-              <div 
+              <div
                 className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar scroll-smooth bg-gray-50/30 rounded-2xl p-5"
                 style={{ border: '1px solid #00000014' }}
               >
@@ -302,8 +347,8 @@ export default function ProductDetailPage() {
                 {activeTab === 'applications' && (
                   <div className="grid gap-3 sm:grid-cols-2">
                     {['Automated Systems', 'Process Monitoring', 'OEM Equipment', 'Industrial Panels', 'Quality Control', 'Manufacturing'].map(app => (
-                      <div 
-                        key={app} 
+                      <div
+                        key={app}
                         className="flex items-center gap-3 rounded-xl bg-white p-5 shadow-sm"
                         style={{ border: '1px solid #00000014' }}
                       >
@@ -338,36 +383,87 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-                  {uiProduct.resources.length > 0 && (
-                    <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-dark mb-5">Product Resources</h4>
-                      <div className="grid gap-3">
-                        {uiProduct.resources.map((doc, idx) => (
-                          <a 
-                            key={idx} 
-                            href={doc.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-gray-50/50 p-5 hover:border-[#0070bc]/30 hover:bg-white transition-all group"
-                          >
-                            <div className="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:bg-[#0070bc] transition-colors">
-                              <FileText className="h-5 w-5 text-[#0070bc] group-hover:text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-bold text-dark">{doc.label}</p>
-                              <p className="text-[10px] text-gray-400 font-medium">{doc.sub}</p>
-                            </div>
-                            <Download className="h-4 w-4 text-gray-300 group-hover:text-[#0070bc]" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              {uiProduct.resources.length > 0 && (
+                <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-dark mb-5">Product Resources</h4>
+                  <div className="grid gap-3">
+                    {uiProduct.resources.map((doc, idx) => (
+                      <a
+                        key={idx}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-gray-50/50 p-5 hover:border-[#0070bc]/30 hover:bg-white transition-all group"
+                      >
+                        <div className="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:bg-[#0070bc] transition-colors">
+                          <FileText className="h-5 w-5 text-[#0070bc] group-hover:text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-dark">{doc.label}</p>
+                          <p className="text-[10px] text-gray-400 font-medium">{doc.sub}</p>
+                        </div>
+                        <Download className="h-4 w-4 text-gray-300 group-hover:text-[#0070bc]" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
         </div>
       </section>
+
+      {/* PRODUCT VIDEO SECTION */}
+      {uiProduct.videoEmbedUrl && (
+        <section className="bg-gray-50/50 py-16 border-t border-gray-100">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-10">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-brand-orange">Product Demo</p>
+              <h2 className="text-3xl font-bold text-dark mb-4">See It In Action</h2>
+              <div className="h-1.5 w-20 bg-[#0070bc] rounded-full"></div>
+            </div>
+            <div className="grid gap-10 lg:grid-cols-[2fr_1fr] items-start">
+              {/* Video embed */}
+              <div className="relative overflow-hidden rounded-2xl shadow-2xl border border-gray-200 bg-black" style={{ aspectRatio: '16/9' }}>
+                <iframe
+                  src={uiProduct.videoEmbedUrl}
+                  title={`${uiProduct.name} Product Demo`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                />
+              </div>
+              {/* Side info */}
+              <div className="space-y-6">
+                <div className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
+                  <h3 className="text-lg font-bold text-dark mb-2">{uiProduct.name}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                    Watch this demonstration to see the {uiProduct.name} in operation, including setup, configuration, and real-world application scenarios.
+                  </p>
+                  <div className="h-px bg-gray-100 my-4" />
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <dt className="text-gray-400 font-medium">Model</dt>
+                      <dd className="font-bold text-[#0070bc]">{uiProduct.model}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-gray-400 font-medium">Category</dt>
+                      <dd className="font-bold text-dark">{uiProduct.categoryName}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <a
+                  href={`/contact?product=${uiProduct.model}`}
+                  className="btn-premium btn-orange-to-black flex items-center justify-center gap-3 rounded-2xl py-4 text-sm font-bold shadow-xl"
+                >
+                  <MessageSquare className="h-4 w-4" /> Request a Quote
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* DYNAMIC SPECIFICATIONS TABLE (FROM API) */}
       <section id="specifications" className="bg-white py-16 md:py-24 border-t border-gray-100">
@@ -376,7 +472,7 @@ export default function ProductDetailPage() {
             <h2 className="text-3xl font-bold text-dark mb-4">Technical Specifications</h2>
             <div className="h-1.5 w-20 bg-[#0070bc] rounded-full"></div>
           </div>
-          
+
           {activeTable ? (
             <div className="overflow-x-auto rounded-xl border border-gray-300 shadow-2xl bg-white">
               <table className="w-full border-collapse text-[13px] leading-relaxed">
@@ -386,7 +482,7 @@ export default function ProductDetailPage() {
                     const rows = rawData.length;
                     const cols = rawData[0]?.length || 0;
                     const covered = Array.from({ length: rows }, () => Array(cols).fill(false));
-                    
+
                     return rawData.map((row: string[], r: number) => (
                       <tr key={r} className="border-b border-gray-300 last:border-0">
                         {row.map((cell, c) => {
@@ -413,21 +509,20 @@ export default function ProductDetailPage() {
                             } else break;
                           }
 
-                          const isHeading = cell.includes('t-heading') || 
-                                          cell.toLowerCase().includes('specification') || 
-                                          (c === 0 && colspan > 1);
+                          const isHeading = cell.includes('t-heading') ||
+                            cell.toLowerCase().includes('specification') ||
+                            (c === 0 && colspan > 1);
 
                           return (
-                            <td 
+                            <td
                               key={c}
                               rowSpan={rowspan}
                               colSpan={colspan}
-                              className={`px-6 py-4 border-r border-gray-300 last:border-0 align-top ${
-                                isHeading 
-                                  ? 'bg-[#2e74b5] text-white font-bold uppercase tracking-wider text-center' 
-                                  : c === 0 ? 'bg-gray-50/80 font-bold text-gray-600 w-[25%]' : 'text-dark font-medium'
-                              }`}
-                              dangerouslySetInnerHTML={{ 
+                              className={`px-6 py-4 border-r border-gray-300 last:border-0 align-top ${isHeading
+                                ? 'bg-[#2e74b5] text-white font-bold uppercase tracking-wider text-center'
+                                : c === 0 ? 'bg-gray-50/80 font-bold text-gray-600 w-[25%]' : 'text-dark font-medium'
+                                }`}
+                              dangerouslySetInnerHTML={{
                                 __html: cell
                                   .replace(/<code[^>]*>/g, '')
                                   .replace(/<\/code>/g, '')
@@ -451,6 +546,8 @@ export default function ProductDetailPage() {
           <p className="mt-6 text-[10px] text-gray-400 italic font-medium">* Technical specifications for {uiProduct.model} are subject to change without prior notice as per manufacturer updates.</p>
         </div>
       </section>
+
+
 
       {/* Related Products */}
       {related.length > 0 && (
@@ -498,7 +595,7 @@ export default function ProductDetailPage() {
                       </a>
                       <span className="inline-block mt-2 font-mono text-[10px] font-bold text-gray-400 tracking-widest uppercase">{rel.model}</span>
                     </div>
-                    
+
                     <div className="space-y-3 mb-8">
                       {rel.size && (
                         <div className="flex items-center justify-between border-b border-gray-50 pb-2">
@@ -519,7 +616,7 @@ export default function ProductDetailPage() {
                         </div>
                       )}
                       {!rel.size && !rel.display && !rel.input && (
-                        <div 
+                        <div
                           className="text-[12px] text-gray-500 line-clamp-2 font-medium text-center"
                           dangerouslySetInnerHTML={{ __html: rel.short_description }}
                         />

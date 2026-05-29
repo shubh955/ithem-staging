@@ -35,17 +35,17 @@ export const NAV_ITEMS: NavItem[] = [
         items: [
           { label: 'Technical Datasheets', href: '/datasheets', description: 'Download technical specs for all models' },
           { label: 'Software & Catalogs', href: '/downloads', description: 'Download utility software and product catalogs' },
-          { label: 'Operating Manuals', href: '/resources/guides', description: 'AI-5742, Humi-Temp & more' },
+          // { label: 'Operating Manuals', href: '/resources/guides', description: 'AI-5742, Humi-Temp & more' },
           { label: 'FAQs', href: '/resources/faqs' },
         ],
       },
-      {
-        heading: 'Learn',
-        items: [
-          { label: 'Application Notes', href: '/resources/blog' },
-          { label: 'Case Studies', href: '/resources/case-studies' },
-        ],
-      },
+      // {
+      //   heading: 'Learn',
+      //   items: [
+      //     { label: 'Application Notes', href: '/resources/blog' },
+      //     { label: 'Case Studies', href: '/resources/case-studies' },
+      //   ],
+      // },
     ],
   },
   { label: 'Company', href: '/about' },

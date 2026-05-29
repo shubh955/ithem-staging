@@ -5,7 +5,7 @@ const reasons = [
     icon: Factory,
     title: 'In-house Manufacturing',
     description: 'Every instrument designed, manufactured, and tested at our Mumbai facility — full control over quality.',
-    points: ['ISO-compliant production', 'In-house tool room', 'QA at every stage'],
+    points: ['In-house tool room', 'QA at every stage'],
     colorClass: 'bg-blue-50',
     iconColor: 'text-blue-500',
   },
@@ -40,15 +40,15 @@ export function WhyIThermSection() {
     <section className="relative bg-white py-16 md:py-20">
       {/* Subtle dotted grid background container */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute inset-0 opacity-[0.3]" 
-          style={{ 
-            backgroundImage: 'radial-gradient(#e5e7eb 1.5px, transparent 1.5px)', 
-            backgroundSize: '24px 24px' 
-          }} 
+        <div
+          className="absolute inset-0 opacity-[0.3]"
+          style={{
+            backgroundImage: 'radial-gradient(#e5e7eb 1.5px, transparent 1.5px)',
+            backgroundSize: '24px 24px'
+          }}
         />
       </div>
-      
+
       {/* Faint gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
 
@@ -87,8 +87,8 @@ export function WhyIThermSection() {
             {reasons.map((r) => {
               const Icon = r.icon
               return (
-                <div 
-                  key={r.title} 
+                <div
+                  key={r.title}
                   className="group flex gap-5 rounded-2xl border border-gray-100 bg-white p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-[linear-gradient(90deg,#237bb812_0%,#FFFFFF_100%)] hover:border-[#237bb94d]"
                 >
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors group-hover:bg-white ${r.colorClass}`}>

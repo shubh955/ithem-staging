@@ -34,7 +34,7 @@ const sortByLabel = <T extends { name: string }>(items: T[]) =>
     sensitivity: 'base',
   }))
 
-const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[]): NavColumn[] => {
+const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[], allProducts: any[]): NavColumn[] => {
   return sortByLabel(categories)
     .map((cat) => {
       const heading = cleanLabel(cat.name)
@@ -44,12 +44,30 @@ const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[]): NavC
       return {
         heading,
         headingHref: `/products?category=${cat.slug}`,
-        items: terms.map((term) => ({
-          label: cleanLabel(term.name),
-          href: `/products?category=${cat.slug}&terms=${encodeURIComponent(term.slug || term.name)}`,
-          description: term.description || `High-quality ${cleanLabel(term.name)} solutions for industrial process control.`,
-          image: item.defaultImage,
-        })),
+        items: terms.map((term, index) => {
+          const termNameLower = term.name.toLowerCase();
+          const t = termNameLower.trim();
+          const termSlugLower = term.slug?.toLowerCase() || '';
+          
+          const matchedProducts = allProducts.filter(p => {
+            return p.name?.toLowerCase().includes(t) ||
+                   p.categories?.some((c: any) => c.slug?.toLowerCase().includes(t) || c.name?.toLowerCase().includes(t) || (termSlugLower && c.slug?.toLowerCase() === termSlugLower)) ||
+                   p.attributes?.some((a: any) => a.options?.some((opt: string) => opt.toLowerCase().includes(t)));
+          });
+          
+          const matchedProductsWithImages = matchedProducts.filter(p => p.images?.[0]?.src);
+          const selectedProduct = matchedProductsWithImages.length > 0 
+            ? matchedProductsWithImages[index % matchedProductsWithImages.length] 
+            : null;
+
+          const finalSlug = term.name === 'AI-7 Series' ? 'ai-7-series' : (term.slug || term.name);
+          return {
+            label: cleanLabel(term.name),
+            href: `/products?category=${cat.slug}&terms=${encodeURIComponent(finalSlug)}`,
+            description: term.description || `High-quality ${cleanLabel(term.name)} solutions for industrial process control.`,
+            image: selectedProduct?.images?.[0]?.src || undefined,
+          }
+        }),
       }
     })
 }
@@ -72,9 +90,40 @@ export function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null)
   const [hoveredItem, setHoveredItem] = useState<NavChild | null>(null)
+  const [hoveredDynamicImage, setHoveredDynamicImage] = useState<string | null>(null)
   const [attributes, setAttributes] = useState<MenuCategory[]>([])
   const [productsMenuLoading, setProductsMenuLoading] = useState(true)
-  
+
+  useEffect(() => {
+    setHoveredDynamicImage(null)
+    if (!hoveredItem || hoveredItem.image || !hoveredItem.href?.includes('terms=')) {
+      return
+    }
+
+    let isMounted = true
+    const fetchDynamicImage = async () => {
+      try {
+        const url = new URL(hoveredItem.href, window.location.origin)
+        const terms = url.searchParams.get('terms')
+        if (!terms) return
+
+        const res = await fetch(`/api/products?search=${encodeURIComponent(terms.replace(/-/g, ' '))}&per_page=1`)
+        if (!isMounted) return
+        const data = await res.json()
+        if (data?.products?.[0]?.images?.[0]?.src) {
+          setHoveredDynamicImage(data.products[0].images[0].src)
+        }
+      } catch (err) {
+        // ignore errors for dynamic prefetch
+      }
+    }
+    fetchDynamicImage()
+
+    return () => {
+      isMounted = false
+    }
+  }, [hoveredItem])
+
   // Search states
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
@@ -98,10 +147,10 @@ export function Header() {
 
     const fetchAllProducts = async () => {
       try {
-        const data = await fetchCachedJson<{ products?: any[] }>('/api/products?initial=true')
+        const data = await fetchCachedJson<{ products?: any[] }>('/api/products?per_page=100')
         if (Array.isArray(data)) {
           setAllProducts(data)
-        } else if (Array.isArray(data.products)) {
+        } else if (Array.isArray(data?.products)) {
           setAllProducts(data.products)
         }
       } catch (err) {
@@ -168,7 +217,7 @@ export function Header() {
     <>
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm transition-all duration-300">
-        
+
         {/* Top bar */}
         <div className="hidden bg-dark py-2 text-[11px] font-semibold tracking-wider text-gray-300 border-b border-white/5 md:block">
           <div className="mx-auto flex max-w-7xl items-center justify-end px-4 sm:px-6 lg:px-8 gap-8">
@@ -202,9 +251,17 @@ export function Header() {
               const displayItem = { ...item }
               const isProductsMenu = item.label === 'Products'
               if (isProductsMenu && attributes.length > 0) {
-                displayItem.children = getProductsMenuColumns(item, attributes)
+                displayItem.children = getProductsMenuColumns(item, attributes, allProducts)
               }
               const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
+
+              const dynamicDefaultProduct = isProductsMenu && allProducts.length > 0
+                ? allProducts.find((p: any) => p.featured && p.images?.[0]?.src) || allProducts.find((p: any) => p.images?.[0]?.src)
+                : null;
+
+              const displayImage = hoveredDynamicImage || hoveredItem?.image || dynamicDefaultProduct?.images?.[0]?.src || item.defaultImage || '/logo.png';
+              const displayLabel = hoveredItem?.label || (isProductsMenu ? 'Industrial Instruments' : item.label);
+              const displayDesc = hoveredItem?.description || (isProductsMenu ? 'Explore our comprehensive range of high-quality process control instruments.' : 'Innovative Instruments & Controls LLP (I-Therm) — foremost manufacturer of process control instruments since 1996.');
 
               return (
                 <div
@@ -254,8 +311,8 @@ export function Header() {
                               isProductsMenu ? "aspect-[16/10] rounded-xl shadow-md" : "aspect-[4/3] rounded-2xl shadow-lg"
                             )}>
                               <Image
-                                src={hoveredItem?.image || item.defaultImage || '/logo.png'}
-                                alt={hoveredItem?.label || item.label}
+                                src={displayImage}
+                                alt={displayLabel}
                                 fill
                                 className="object-cover transition-all duration-700 hover:scale-110"
                                 sizes={isProductsMenu ? "220px" : "300px"}
@@ -266,13 +323,13 @@ export function Header() {
                                 "font-bold text-dark truncate",
                                 isProductsMenu ? "text-sm" : "text-base"
                               )}>
-                                {hoveredItem?.label || item.label}
+                                {displayLabel}
                               </h4>
                               <p className={cn(
                                 "mt-2 text-gray-500 overflow-hidden",
                                 isProductsMenu ? "max-h-[60px] text-xs leading-5" : "min-h-[80px] text-sm leading-relaxed"
                               )}>
-                                {hoveredItem?.description || 'Innovative Instruments & Controls LLP (I-Therm) — foremost manufacturer of process control instruments since 1996.'}
+                                {displayDesc}
                               </p>
                             </div>
                           </div>
@@ -292,60 +349,60 @@ export function Header() {
                               </div>
                             ) : displayItem.children && displayItem.children.length > 0 ? (
                               <div className={cn(
-                              "grid",
-                              isProductsMenu ? "gap-y-6 gap-x-7" : "gap-y-10 gap-x-8",
-                              isProductsMenu
-                                ? getProductGridColumnsClass(displayItem.children.length)
-                                : getGridColumnsClass(displayItem.children.length)
-                            )}>
-                              {displayItem.children.map((col, ci) => (
-                                <div key={ci}>
-                                  {col.heading && (col.headingHref ? (
-                                    <a
-                                      href={col.headingHref}
-                                      className={cn(
-                                        "block font-bold tracking-normal text-brand-orange transition-colors hover:text-orange-600",
+                                "grid",
+                                isProductsMenu ? "gap-y-6 gap-x-7" : "gap-y-10 gap-x-8",
+                                isProductsMenu
+                                  ? getProductGridColumnsClass(displayItem.children.length)
+                                  : getGridColumnsClass(displayItem.children.length)
+                              )}>
+                                {displayItem.children.map((col, ci) => (
+                                  <div key={ci}>
+                                    {col.heading && (col.headingHref ? (
+                                      <a
+                                        href={col.headingHref}
+                                        className={cn(
+                                          "block font-bold tracking-normal text-brand-orange transition-colors hover:text-orange-600",
+                                          isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
+                                        )}
+                                        onClick={() => setActiveMenu(null)}
+                                      >
+                                        {col.heading}
+                                      </a>
+                                    ) : (
+                                      <p className={cn(
+                                        "font-bold tracking-normal text-brand-orange",
                                         isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
-                                      )}
-                                      onClick={() => setActiveMenu(null)}
-                                    >
-                                      {col.heading}
-                                    </a>
-                                  ) : (
-                                    <p className={cn(
-                                      "font-bold tracking-normal text-brand-orange",
-                                      isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
-                                    )}>
-                                      {col.heading}
-                                    </p>
-                                  ))}
-                                  {col.items.length > 0 && <ul className={cn(isProductsMenu ? "space-y-0.5" : "space-y-1")}>
-                                    {col.items.map((child) => (
-                                      <li key={child.href}>
-                                        <a
-                                          href={child.href}
-                                          className={cn(
-                                            "group/link block transition-all hover:bg-orange-50",
-                                            isProductsMenu ? "rounded-lg px-1.5 py-0.5" : "rounded-xl px-2.5 py-1.5"
-                                          )}
-                                          onMouseEnter={() => setHoveredItem(child)}
-                                          onClick={() => setActiveMenu(null)}
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <span className={cn(
-                                              "font-semibold text-gray-700 group-hover/link:text-brand-orange",
-                                              isProductsMenu ? "text-[13px] leading-6" : "text-sm"
-                                            )}>
-                                              {child.label}
-                                            </span>
-                                            <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
-                                          </div>
-                                        </a>
-                                      </li>
+                                      )}>
+                                        {col.heading}
+                                      </p>
                                     ))}
-                                  </ul>}
-                                </div>
-                              ))}
+                                    {col.items.length > 0 && <ul className={cn(isProductsMenu ? "space-y-0.5" : "space-y-1")}>
+                                      {col.items.map((child) => (
+                                        <li key={child.href}>
+                                          <a
+                                            href={child.href}
+                                            className={cn(
+                                              "group/link block transition-all hover:bg-orange-50",
+                                              isProductsMenu ? "rounded-lg px-1.5 py-0.5" : "rounded-xl px-2.5 py-1.5"
+                                            )}
+                                            onMouseEnter={() => setHoveredItem(child)}
+                                            onClick={() => setActiveMenu(null)}
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <span className={cn(
+                                                "font-semibold text-gray-700 group-hover/link:text-brand-orange",
+                                                isProductsMenu ? "text-[13px] leading-6" : "text-sm"
+                                              )}>
+                                                {child.label}
+                                              </span>
+                                              <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
+                                            </div>
+                                          </a>
+                                        </li>
+                                      ))}
+                                    </ul>}
+                                  </div>
+                                ))}
                               </div>
                             ) : (
                               <div className="flex min-h-[220px] items-center justify-center text-sm font-semibold text-gray-500">
@@ -510,7 +567,7 @@ export function Header() {
                   const displayItem = { ...item }
                   const isProductsMenu = item.label === 'Products'
                   if (isProductsMenu && attributes.length > 0) {
-                    displayItem.children = getProductsMenuColumns(item, attributes)
+                    displayItem.children = getProductsMenuColumns(item, attributes, allProducts)
                   }
                   const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
 

@@ -17,6 +17,13 @@ interface Product {
   attributes: { name: string; options: string[] }[]
   short_description: string
   featured?: boolean
+  replacement_product?: {
+    id: number
+    name: string
+    slug: string
+    price?: string
+    image?: string
+  }
 }
 
 interface Attribute {
@@ -645,7 +652,11 @@ export function ProductListing() {
                           <span className="font-bold text-[10px] text-gray-200 uppercase tracking-widest">I-Therm</span>
                         </div>
                       )}
-                      {product.featured && (
+                      {product.replacement_product ? (
+                        <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-sm animate-pulse">
+                          Discontinued
+                        </span>
+                      ) : product.featured && (
                         <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-brand-orange px-3 py-1 text-xs font-bold text-white shadow-sm">
                           <Star className="h-3 w-3 fill-white" />
                           Featured
@@ -691,7 +702,18 @@ export function ProductListing() {
                         )}
                       </div>
 
-                      <div className="mt-auto">
+                      <div className="mt-auto space-y-3">
+                        {product.replacement_product && (
+                          <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-center mb-2">
+                            <span className="block text-[10px] text-red-600 font-bold uppercase tracking-widest mb-1.5">Model Discontinued</span>
+                            <a
+                              href={`/products/replacement/${product.replacement_product.slug}?id=${product.replacement_product.id}`}
+                              className="text-[11px] font-bold text-red-700 hover:text-red-800 underline decoration-red-300 underline-offset-2 transition-colors"
+                            >
+                              View Replacement: {product.replacement_product.name}
+                            </a>
+                          </div>
+                        )}
                         <a
                           href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
                           className="btn-premium btn-black-to-orange flex items-center justify-center gap-2 w-full py-3.5 text-[11px] font-bold uppercase tracking-[0.2em] rounded-lg shadow-lg"

@@ -3,14 +3,14 @@ import Image from 'next/image'
 import { PageHeroSection } from '@/components/sections/PageHeroSection'
 import { WhyIThermSection } from '@/components/sections/WhyIThermSection'
 import { CTASection } from '@/components/sections/CTASection'
-import { 
-  Target, 
-  Compass, 
-  Award, 
-  ShieldCheck, 
-  Users, 
-  Zap, 
-  Microscope, 
+import {
+  Target,
+  Compass,
+  Award,
+  ShieldCheck,
+  Users,
+  Zap,
+  Microscope,
   Settings,
   CheckCircle2,
   TrendingUp
@@ -52,9 +52,9 @@ const expertise = [
 ]
 
 const certifications = [
-  { name: 'ISO 9001:2015', organization: 'Quality Management System', status: 'Certified' },
-  { name: 'CE Marking', organization: 'European Health, Safety & Environmental Standards', status: 'Compliant' },
-  { name: 'RoHS', organization: 'Restriction of Hazardous Substances', status: 'Compliant' },
+  // { name: 'ISO 9001:2015', organization: 'Quality Management System', status: 'Certified' },
+  // { name: 'CE Marking', organization: 'European Health, Safety & Environmental Standards', status: 'Compliant' },
+  // { name: 'RoHS', organization: 'Restriction of Hazardous Substances', status: 'Compliant' },
   { name: 'MSME', organization: 'Ministry of Micro, Small and Medium Enterprises', status: 'Registered' },
 ]
 
@@ -98,8 +98,8 @@ export default function AboutPage() {
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-dark">ISO 9001:2015</div>
-                    <div className="text-xs text-gray-500">Quality Certified</div>
+                    <div className="text-sm font-bold text-dark">MSME</div>
+                    <div className="text-xs text-gray-500">Registered</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-2xl bg-gray-50 px-6 py-4 border border-gray-100">
@@ -117,21 +117,21 @@ export default function AboutPage() {
             <div className="relative">
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-8 overflow-hidden rounded-3xl shadow-2xl">
-                  <Image 
-                    src="/factory_precision_instruments_1778053952847.png" 
-                    alt="I-Therm Manufacturing Facility" 
-                    width={800} 
-                    height={600} 
+                  <Image
+                    src="/factory_precision_instruments_1778053952847.png"
+                    alt="I-Therm Manufacturing Facility"
+                    width={800}
+                    height={600}
                     className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                 </div>
                 <div className="col-span-4 flex flex-col gap-4">
                   <div className="flex-1 overflow-hidden rounded-3xl shadow-xl">
-                    <Image 
-                      src="/rd_lab_precision_1778054176204.png" 
-                      alt="I-Therm R&D Lab" 
-                      width={400} 
-                      height={400} 
+                    <Image
+                      src="/rd_lab_precision_1778054176204.png"
+                      alt="I-Therm R&D Lab"
+                      width={400}
+                      height={400}
                       className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                     />
                   </div>
@@ -142,7 +142,7 @@ export default function AboutPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Floating Stats */}
               <div className="absolute -bottom-10 -left-10 z-20 hidden lg:block">
                 <div className="rounded-3xl bg-white p-8 shadow-2xl border border-gray-100">
@@ -238,7 +238,7 @@ export default function AboutPage() {
               <div key={item.title} className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-500 hover:shadow-2xl">
                 {/* Sliding Background */}
                 <div className="absolute top-0 left-0 w-full h-[5px] bg-[#1e3b69] transition-all duration-500 ease-in-out group-hover:h-full" />
-                
+
                 <div className="relative z-10">
                   <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-orange text-white transition-all duration-300 group-hover:bg-white group-hover:text-[#1e3b69]">
                     <item.icon className="h-6 w-6" />
@@ -257,12 +257,12 @@ export default function AboutPage() {
       </section>
 
       {/* Certifications Section */}
-      <section className="bg-dark py-24 relative overflow-hidden">
+      {/* <section className="bg-dark py-24 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-brand-orange/20 blur-3xl rounded-full -translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-navy/20 blur-3xl rounded-full translate-x-1/2 translate-y-1/2" />
         </div>
-        
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
           <div className="lg:flex lg:items-center lg:justify-between mb-16">
             <div className="max-w-2xl">
@@ -298,7 +298,7 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       <WhyIThermSection />
       <CTASection />

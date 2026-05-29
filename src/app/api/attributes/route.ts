@@ -74,8 +74,8 @@ export async function GET() {
     // 3. For each category, find ALL matching attributes and merge their terms
     const sortedCategories = Array.isArray(categories)
       ? categories
-          .filter((cat: any) => cat?.name && cat.slug !== 'uncategorized')
-          .sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+        .filter((cat: any) => cat?.name && cat.slug !== 'uncategorized')
+        .sort((a: any, b: any) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
       : [];
 
     const categoryMatches = new Map<number, any[]>();
@@ -85,31 +85,31 @@ export async function GET() {
       const cleanCatName = normalizeText(cat.name);
       const catSlug = normalizeText(cat.slug);
       const catTokens = tokenise(`${cat.name} ${cat.slug}`);
-      
+
       const matchingAttrs = Array.isArray(attributes) ? attributes.filter((attr: any) => {
         const cleanAttrName = normalizeText(attr.name);
         const attrSlug = normalizeText(attr.slug);
         const attrTokens = tokenise(`${attr.name} ${attr.slug}`);
-        
+
         // Exact or very close matches
         if (cleanAttrName === cleanCatName || attrSlug === catSlug) return true;
-        
+
         // Strictly separate Multifunction from regular Timers/Counters
         const isMultifunCat = cleanCatName.includes('multifun');
         const isMultifunAttr = cleanAttrName.includes('multifun');
 
         if (isMultifunCat !== isMultifunAttr) return false;
-        
+
         // Otherwise, allow matching if the category and attribute share a
         // meaningful word, e.g. "Process Indicators" -> "Process Indicator Series".
         const hasSharedMeaningfulToken = catTokens.some(token => attrTokens.includes(token));
         if (hasSharedMeaningfulToken) return true;
 
         // Finally, allow direct containment for compact slugs/names.
-        return cleanAttrName.includes(cleanCatName) || 
-               cleanCatName.includes(cleanAttrName) ||
-               attrSlug.includes(catSlug) ||
-               catSlug.includes(attrSlug);
+        return cleanAttrName.includes(cleanCatName) ||
+          cleanCatName.includes(cleanAttrName) ||
+          attrSlug.includes(catSlug) ||
+          catSlug.includes(attrSlug);
       }) : [];
 
       categoryMatches.set(cat.id, matchingAttrs);
@@ -135,7 +135,7 @@ export async function GET() {
     const menuData = sortedCategories.map((cat: any) => {
       const matchingAttrs = categoryMatches.get(cat.id) || [];
       let allTerms: any[] = [];
-      
+
       matchingAttrs.forEach((attr: any) => {
         const termsData = termsByAttributeId.get(attr.id) || [];
         termsData.forEach((t: any) => {
