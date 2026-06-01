@@ -31,14 +31,19 @@ body {
 }
 
 /* Headings use Inter font */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-inter), 'Inter', sans-serif;
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: #0A0A0A;
 }
 
-.pills-cover{
+.pills-cover {
   background: #b4b4b45e;
   color: #000000;
   font-weight: 400;
@@ -47,86 +52,86 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 30px;
 }
 
-.product-card:hover .pills-cover{
+.product-card:hover .pills-cover {
   background-color: white;
   border: 1px solid #00000021;
 }
 
-.greey-background{
+.greey-background {
   background: #80808014;
 }
 
-.slider-inner-space{
+.slider-inner-space {
   padding: 4rem 5.5rem;
 }
 
-.black-arrow{
+.black-arrow {
   color: #000000;
 }
 
-.line-imporve{
+.line-imporve {
   font-weight: 600;
   letter-spacing: 0.6px;
 }
 
-.border-light{
+.border-light {
   border-bottom: 1px solid #12121212 !important;
 }
 
-.bg-light-grey{
+.bg-light-grey {
   background: #0000000a;
   background-color: transparent;
 }
 
-.border-orange{
+.border-orange {
   border-bottom: 1px solid var(--brand-orange);
 }
 
-.gap-30{
+.gap-30 {
   gap: 30px;
 }
 
-.border-round{
+.border-round {
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   border-radius: 10px;
 }
 
-.height-190{
+.height-190 {
   height: 140px;
 }
 
-.back-light-blue{
+.back-light-blue {
   background: #237bb60f;
 }
 
-.border-b-light{
+.border-b-light {
   border-bottom: 1px solid #0000001a;
 }
 
-.feature-product-card{
+.feature-product-card {
   padding: 10px;
 }
 
-.product-image{
+.product-image {
   background: #00000026;
   object-fit: cover;
   padding: 0;
   border-radius: 10px;
 }
 
-.feature-card-content{
+.feature-card-content {
   padding: 15px 10px;
 }
 
-.banner-heading-font{
+.banner-heading-font {
   line-height: 60px;
 }
 
-.upper-cover{
+.upper-cover {
   border-radius: 10px;
 }
 
-.black-color{
+.black-color {
   color: #000000;
 }
 
@@ -136,21 +141,27 @@ a {
   text-decoration: none;
 }
 
-.greey-border{
+.greey-border {
   border: 1px solid #0000001c;
 }
 
-.white-gradient:hover{
+.white-gradient:hover {
   background-color: white;
 }
 
 
-.padd-control .desktop-menu-links, .padd-control .desktop-menu-links{
+.padd-control .desktop-menu-links,
+.padd-control .desktop-menu-links {
   padding: 40px 10px 40px 10px;
 }
 
-.desktop-padd-0{
+.desktop-padd-0 {
   padding: 0 25px !important;
+}
+
+.dis-area {
+  margin-top: 15px;
+  margin-bottom: 10px;
 }
 
 /* Better button defaults */
@@ -206,7 +217,7 @@ button {
 }
 
 @media (max-width: 768px) {
-  .prev-btn{
+  .prev-btn {
     top: 92%;
     left: 68%;
   }
@@ -215,7 +226,7 @@ button {
     padding: 10px 20px !important;
   }
 
-  .next-btn{
+  .next-btn {
     top: 92%;
   }
 
@@ -354,13 +365,16 @@ button {
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #e5e7eb;
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #f97316;
 }

@@ -34,42 +34,130 @@ const sortByLabel = <T extends { name: string }>(items: T[]) =>
     sensitivity: 'base',
   }))
 
-const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[], allProducts: any[]): NavColumn[] => {
-  return sortByLabel(categories)
-    .map((cat) => {
-      const heading = cleanLabel(cat.name)
-      const validTerms = (cat.terms || []).filter(term => typeof term.count !== 'number' || term.count > 0)
-      const terms = sortByLabel(validTerms)
+const normalizeMenuKey = (value: string) => cleanLabel(value)
+  .toLowerCase()
+  .replace(/&/g, 'and')
+  .replace(/\bcontrollers\b/g, 'controller')
+  .replace(/\bindicators\b/g, 'indicator')
+  .replace(/\bcounters\b/g, 'counter')
+  .replace(/\btimers\b/g, 'timer')
+  .replace(/\btransmitters\b/g, 'transmitter')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim()
 
+const PRODUCT_CATEGORY_ORDER = [
+  'temperature controller',
+  'process controller',
+  'process indicator',
+  'counter',
+  'timer',
+  'multifunction timer and counter',
+  'application specific',
+  'transmitter',
+]
+
+const PRODUCT_CATEGORY_LABELS: Record<string, string> = {
+  'temperature controller': 'Temperature Controller',
+  'process controller': 'Process Controller',
+  'process indicator': 'Process Indicators',
+  counter: 'Counters',
+  timer: 'Timers',
+  'multifunction timer and counter': 'Multifunction Timers & Counters',
+  'application specific': 'Application Specific',
+  transmitter: 'Transmitter',
+}
+
+const PRODUCT_TERM_ORDER: Record<string, string[]> = {
+  'temperature controller': ['ai 5 series', 'ai 7 series', 'px series'],
+  'process controller': ['fx series'],
+  'process indicator': ['pi series', 'pi jd series'],
+  counter: ['bl series'],
+  timer: ['ktm series', 'xtm series'],
+  'multifunction timer and counter': ['cx series', 'ctr series', 'xtc series'],
+  'application specific': ['data logger', 'humidity controller', 'auto clave controller', 'ult controller'],
+  transmitter: ['head mounted'],
+}
+
+const getOrderedIndex = (order: string[], value: string) => {
+  const key = normalizeMenuKey(value)
+  const exactIndex = order.indexOf(key)
+  if (exactIndex >= 0) return exactIndex
+
+  const fuzzyIndex = order.findIndex((orderedKey) => key.includes(orderedKey) || orderedKey.includes(key))
+  return fuzzyIndex >= 0 ? fuzzyIndex : Number.MAX_SAFE_INTEGER
+}
+
+const sortProductCategories = (categories: MenuCategory[]) =>
+  [...categories].sort((a, b) => {
+    const orderDiff = getOrderedIndex(PRODUCT_CATEGORY_ORDER, a.name) - getOrderedIndex(PRODUCT_CATEGORY_ORDER, b.name)
+    if (orderDiff !== 0) return orderDiff
+    return cleanLabel(a.name).localeCompare(cleanLabel(b.name), undefined, { numeric: true, sensitivity: 'base' })
+  })
+
+const sortProductTerms = (categoryName: string, terms: MenuTerm[]) => {
+  const categoryKey = PRODUCT_CATEGORY_ORDER[getOrderedIndex(PRODUCT_CATEGORY_ORDER, categoryName)]
+  const termOrder = categoryKey ? PRODUCT_TERM_ORDER[categoryKey] : undefined
+
+  if (!termOrder) return sortByLabel(terms)
+
+  return [...terms].sort((a, b) => {
+    const orderDiff = getOrderedIndex(termOrder, a.name) - getOrderedIndex(termOrder, b.name)
+    if (orderDiff !== 0) return orderDiff
+    return cleanLabel(a.name).localeCompare(cleanLabel(b.name), undefined, { numeric: true, sensitivity: 'base' })
+  })
+}
+
+const isDiscontinuedCategory = (category: MenuCategory) => {
+  const name = normalizeMenuKey(category.name)
+  const slug = normalizeMenuKey(category.slug)
+  return name.includes('discontinued') || slug.includes('discontinued')
+}
+
+const buildProductMenuColumn = (cat: MenuCategory, allProducts: any[]): NavColumn => {
+  const categoryKey = PRODUCT_CATEGORY_ORDER[getOrderedIndex(PRODUCT_CATEGORY_ORDER, cat.name)]
+  const heading = categoryKey ? PRODUCT_CATEGORY_LABELS[categoryKey] : cleanLabel(cat.name)
+  const validTerms = (cat.terms || []).filter(term => typeof term.count !== 'number' || term.count > 0)
+  const terms = sortProductTerms(cat.name, validTerms)
+
+  return {
+    heading,
+    headingHref: `/products?category=${cat.slug}`,
+    items: terms.map((term, index) => {
+      const termNameLower = term.name.toLowerCase();
+      const t = termNameLower.trim();
+      const termSlugLower = term.slug?.toLowerCase() || '';
+
+      const matchedProducts = allProducts.filter(p => {
+        return p.name?.toLowerCase().includes(t) ||
+          p.categories?.some((c: any) => c.slug?.toLowerCase().includes(t) || c.name?.toLowerCase().includes(t) || (termSlugLower && c.slug?.toLowerCase() === termSlugLower)) ||
+          p.attributes?.some((a: any) => a.options?.some((opt: string) => opt.toLowerCase().includes(t)));
+      });
+
+      const matchedProductsWithImages = matchedProducts.filter(p => p.images?.[0]?.src);
+      const selectedProduct = matchedProductsWithImages.length > 0
+        ? matchedProductsWithImages[index % matchedProductsWithImages.length]
+        : null;
+
+      const finalSlug = term.name === 'AI-7 Series' ? 'ai-7-series' : (term.slug || term.name);
       return {
-        heading,
-        headingHref: `/products?category=${cat.slug}`,
-        items: terms.map((term, index) => {
-          const termNameLower = term.name.toLowerCase();
-          const t = termNameLower.trim();
-          const termSlugLower = term.slug?.toLowerCase() || '';
-          
-          const matchedProducts = allProducts.filter(p => {
-            return p.name?.toLowerCase().includes(t) ||
-                   p.categories?.some((c: any) => c.slug?.toLowerCase().includes(t) || c.name?.toLowerCase().includes(t) || (termSlugLower && c.slug?.toLowerCase() === termSlugLower)) ||
-                   p.attributes?.some((a: any) => a.options?.some((opt: string) => opt.toLowerCase().includes(t)));
-          });
-          
-          const matchedProductsWithImages = matchedProducts.filter(p => p.images?.[0]?.src);
-          const selectedProduct = matchedProductsWithImages.length > 0 
-            ? matchedProductsWithImages[index % matchedProductsWithImages.length] 
-            : null;
-
-          const finalSlug = term.name === 'AI-7 Series' ? 'ai-7-series' : (term.slug || term.name);
-          return {
-            label: cleanLabel(term.name),
-            href: `/products?category=${cat.slug}&terms=${encodeURIComponent(finalSlug)}`,
-            description: term.description || `High-quality ${cleanLabel(term.name)} solutions for industrial process control.`,
-            image: selectedProduct?.images?.[0]?.src || undefined,
-          }
-        }),
+        label: cleanLabel(term.name),
+        href: `/products?category=${cat.slug}&terms=${encodeURIComponent(finalSlug)}`,
+        description: term.description || `High-quality ${cleanLabel(term.name)} solutions for industrial process control.`,
+        image: selectedProduct?.images?.[0]?.src || undefined,
       }
-    })
+    }),
+  }
+}
+
+const getProductsMenuColumns = (item: NavItem, categories: MenuCategory[], allProducts: any[]): NavColumn[] => {
+  return sortProductCategories(categories)
+    .filter((cat) => !isDiscontinuedCategory(cat))
+    .map((cat) => buildProductMenuColumn(cat, allProducts))
+}
+
+const getDiscontinuedProductsMenuColumn = (categories: MenuCategory[], allProducts: any[]) => {
+  const discontinuedCategory = categories.find(isDiscontinuedCategory)
+  return discontinuedCategory ? buildProductMenuColumn(discontinuedCategory, allProducts) : null
 }
 
 const getGridColumnsClass = (count: number) => {
@@ -253,6 +341,9 @@ export function Header() {
               if (isProductsMenu && attributes.length > 0) {
                 displayItem.children = getProductsMenuColumns(item, attributes, allProducts)
               }
+              const discontinuedProductsColumn = isProductsMenu && attributes.length > 0
+                ? getDiscontinuedProductsMenuColumn(attributes, allProducts)
+                : null
               const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
 
               const dynamicDefaultProduct = isProductsMenu && allProducts.length > 0
@@ -347,62 +438,93 @@ export function Header() {
                                 <p className="mt-4 text-sm font-semibold text-gray-700">Loading product categories...</p>
                                 <p className="mt-1 text-xs text-gray-400">Syncing latest WooCommerce menu</p>
                               </div>
-                            ) : displayItem.children && displayItem.children.length > 0 ? (
-                              <div className={cn(
-                                "grid",
-                                isProductsMenu ? "gap-y-6 gap-x-7" : "gap-y-10 gap-x-8",
-                                isProductsMenu
-                                  ? getProductGridColumnsClass(displayItem.children.length)
-                                  : getGridColumnsClass(displayItem.children.length)
-                              )}>
-                                {displayItem.children.map((col, ci) => (
-                                  <div key={ci}>
-                                    {col.heading && (col.headingHref ? (
-                                      <a
-                                        href={col.headingHref}
-                                        className={cn(
-                                          "block font-bold tracking-normal text-brand-orange transition-colors hover:text-orange-600",
-                                          isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
-                                        )}
-                                        onClick={() => setActiveMenu(null)}
-                                      >
-                                        {col.heading}
-                                      </a>
-                                    ) : (
-                                      <p className={cn(
-                                        "font-bold tracking-normal text-brand-orange",
-                                        isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
-                                      )}>
-                                        {col.heading}
-                                      </p>
-                                    ))}
-                                    {col.items.length > 0 && <ul className={cn(isProductsMenu ? "space-y-0.5" : "space-y-1")}>
-                                      {col.items.map((child) => (
-                                        <li key={child.href}>
+                            ) : (displayItem.children && displayItem.children.length > 0) || discontinuedProductsColumn ? (
+                              <div>
+                                {displayItem.children && displayItem.children.length > 0 && (
+                                  <div className={cn(
+                                    "grid",
+                                    isProductsMenu ? "gap-y-6 gap-x-7" : "gap-y-10 gap-x-8",
+                                    isProductsMenu
+                                      ? getProductGridColumnsClass(displayItem.children.length)
+                                      : getGridColumnsClass(displayItem.children.length)
+                                  )}>
+                                    {displayItem.children.map((col, ci) => (
+                                      <div key={ci}>
+                                        {col.heading && (col.headingHref ? (
                                           <a
-                                            href={child.href}
+                                            href={col.headingHref}
                                             className={cn(
-                                              "group/link block transition-all hover:bg-orange-50",
-                                              isProductsMenu ? "rounded-lg px-1.5 py-0.5" : "rounded-xl px-2.5 py-1.5"
+                                              "block font-bold tracking-normal text-brand-orange transition-colors hover:text-orange-600",
+                                              isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
                                             )}
-                                            onMouseEnter={() => setHoveredItem(child)}
                                             onClick={() => setActiveMenu(null)}
                                           >
-                                            <div className="flex items-center justify-between">
-                                              <span className={cn(
-                                                "font-semibold text-gray-700 group-hover/link:text-brand-orange",
-                                                isProductsMenu ? "text-[13px] leading-6" : "text-sm"
-                                              )}>
-                                                {child.label}
-                                              </span>
-                                              <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
-                                            </div>
+                                            {col.heading}
                                           </a>
-                                        </li>
-                                      ))}
-                                    </ul>}
+                                        ) : (
+                                          <p className={cn(
+                                            "font-bold tracking-normal text-brand-orange",
+                                            isProductsMenu ? "mb-2 text-[13px] leading-snug" : "mb-3 text-[14px]"
+                                          )}>
+                                            {col.heading}
+                                          </p>
+                                        ))}
+                                        {col.items.length > 0 && <ul className={cn(isProductsMenu ? "space-y-0.5" : "space-y-1")}>
+                                          {col.items.map((child) => (
+                                            <li key={child.href}>
+                                              <a
+                                                href={child.href}
+                                                className={cn(
+                                                  "group/link block transition-all hover:bg-orange-50",
+                                                  isProductsMenu ? "rounded-lg px-1.5" : "rounded-xl px-2.5 py-1.5"
+                                                )}
+                                                onMouseEnter={() => setHoveredItem(child)}
+                                                onClick={() => setActiveMenu(null)}
+                                              >
+                                                <div className="flex items-center justify-between">
+                                                  <span className={cn(
+                                                    "font-semibold text-gray-700 group-hover/link:text-brand-orange",
+                                                    isProductsMenu ? "text-[13px] leading-6" : "text-sm"
+                                                  )}>
+                                                    {child.label}
+                                                  </span>
+                                                  <ChevronDown className="h-3 w-3 -rotate-90 opacity-0 group-hover/link:opacity-100 transition-all group-hover/link:translate-x-1" />
+                                                </div>
+                                              </a>
+                                            </li>
+                                          ))}
+                                        </ul>}
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                )}
+                                {isProductsMenu && discontinuedProductsColumn && (
+                                  <div className="dis-area border-t border-red-100 pt-3">
+                                    <a
+                                      href={discontinuedProductsColumn.headingHref || '/products'}
+                                      className="inline-flex text-[13px] font-extrabold leading-snug text-red-600 underline decoration-red-300 decoration-2 underline-offset-4 transition-colors hover:text-red-700 hover:decoration-red-500"
+                                      onClick={() => setActiveMenu(null)}
+                                    >
+                                      {discontinuedProductsColumn.heading || 'Discontinued Products'}
+                                    </a>
+                                    {discontinuedProductsColumn.items.length > 0 && (
+                                      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                                        {discontinuedProductsColumn.items.map((child) => (
+                                          <li key={child.href}>
+                                            <a
+                                              href={child.href}
+                                              className="text-[13px] font-semibold leading-6 text-red-500 underline decoration-red-200 underline-offset-4 transition-colors hover:text-red-700"
+                                              onMouseEnter={() => setHoveredItem(child)}
+                                              onClick={() => setActiveMenu(null)}
+                                            >
+                                              {child.label}
+                                            </a>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="flex min-h-[220px] items-center justify-center text-sm font-semibold text-gray-500">
@@ -569,6 +691,9 @@ export function Header() {
                   if (isProductsMenu && attributes.length > 0) {
                     displayItem.children = getProductsMenuColumns(item, attributes, allProducts)
                   }
+                  const discontinuedProductsColumn = isProductsMenu && attributes.length > 0
+                    ? getDiscontinuedProductsMenuColumn(attributes, allProducts)
+                    : null
                   const hasMegaMenu = Boolean(displayItem.children) || isProductsMenu
 
                   return (
@@ -589,29 +714,54 @@ export function Header() {
                                   <Loader2 className="h-4 w-4 animate-spin text-brand-orange" />
                                   Loading product categories...
                                 </div>
-                              ) : displayItem.children && displayItem.children.length > 0 ? displayItem.children.map((col) => (
-                                <div key={col.heading || col.items[0]?.href}>
-                                  {col.heading && (
-                                    <a
-                                      href={col.headingHref || '#'}
-                                      onClick={() => setMobileOpen(false)}
-                                      className="block rounded-lg px-2 py-1.5 text-sm font-bold text-brand-orange"
-                                    >
-                                      {col.heading}
-                                    </a>
+                              ) : (displayItem.children && displayItem.children.length > 0) || discontinuedProductsColumn ? (
+                                <>
+                                  {isProductsMenu && discontinuedProductsColumn && (
+                                    <div className="border-b border-red-100 pb-3">
+                                      <a
+                                        href={discontinuedProductsColumn.headingHref || '/products'}
+                                        onClick={() => setMobileOpen(false)}
+                                        className="block rounded-lg px-2 py-1.5 text-sm font-extrabold text-red-600 underline decoration-red-300 decoration-2 underline-offset-4"
+                                      >
+                                        {discontinuedProductsColumn.heading || 'Discontinued Products'}
+                                      </a>
+                                      {discontinuedProductsColumn.items.map((child) => (
+                                        <a
+                                          key={child.href}
+                                          href={child.href}
+                                          onClick={() => setMobileOpen(false)}
+                                          className="block rounded-lg px-2 py-1 text-sm font-semibold text-red-500 underline decoration-red-200 underline-offset-4"
+                                        >
+                                          {child.label}
+                                        </a>
+                                      ))}
+                                    </div>
                                   )}
-                                  {col.items.map((child) => (
-                                    <a
-                                      key={child.href}
-                                      href={child.href}
-                                      onClick={() => setMobileOpen(false)}
-                                      className="block rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:text-brand-orange"
-                                    >
-                                      {child.label}
-                                    </a>
+                                  {displayItem.children?.map((col) => (
+                                    <div key={col.heading || col.items[0]?.href}>
+                                      {col.heading && (
+                                        <a
+                                          href={col.headingHref || '#'}
+                                          onClick={() => setMobileOpen(false)}
+                                          className="block rounded-lg px-2 py-1.5 text-sm font-bold text-brand-orange"
+                                        >
+                                          {col.heading}
+                                        </a>
+                                      )}
+                                      {col.items.map((child) => (
+                                        <a
+                                          key={child.href}
+                                          href={child.href}
+                                          onClick={() => setMobileOpen(false)}
+                                          className="block rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:text-brand-orange"
+                                        >
+                                          {child.label}
+                                        </a>
+                                      ))}
+                                    </div>
                                   ))}
-                                </div>
-                              )) : (
+                                </>
+                              ) : (
                                 <div className="px-2 py-3 text-sm font-semibold text-gray-500">
                                   Product categories are not available right now.
                                 </div>

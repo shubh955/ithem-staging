@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { PageHeroSection } from '@/components/sections/PageHeroSection'
+import { ContactForm } from '@/components/sections/ContactForm'
 import { Phone, Mail, MapPin, Globe, Building2, MessageCircle, Clock, ArrowRight } from 'lucide-react'
 import { SITE_CONFIG } from '@/lib/utils/constants'
 
@@ -123,54 +124,7 @@ export default function ContactPage() {
 
             {/* Inquiry Form Column */}
             <div className="lg:col-span-7">
-              <div className="rounded-3xl bg-white p-6 md:p-10 shadow-xl border border-gray-50">
-                <h2 className="text-xl font-bold text-dark mb-1">Send an Inquiry</h2>
-                <p className="text-sm text-gray-500 mb-8">Fill out the form and we&apos;ll get back to you within 24 hours.</p>
-
-                <form className="space-y-5">
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-dark uppercase ml-1">Full Name <span className="text-red-500">*</span></label>
-                      <input type="text" required className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all" placeholder="John Doe" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-dark uppercase ml-1">Phone Number <span className="text-red-500">*</span></label>
-                      <input type="tel" required className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all" placeholder="+91 00000 00000" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-dark uppercase ml-1">Email Address <span className="text-red-500">*</span></label>
-                    <input type="email" required className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all" placeholder="john@company.com" />
-                  </div>
-
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-dark uppercase ml-1">Inquiry Type</label>
-                      <select className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all bg-white cursor-pointer">
-                        <option>Product Inquiry</option>
-                        <option>Technical Support</option>
-                        <option>Custom Automation</option>
-                        <option>Dealer Opportunity</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-dark uppercase ml-1">Company</label>
-                      <input type="text" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all" placeholder="Your Company Name" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-dark uppercase ml-1">Message <span className="text-red-500">*</span></label>
-                    <textarea required rows={4} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-4 focus:ring-brand-orange/5 transition-all resize-none" placeholder="How can we help you?"></textarea>
-                  </div>
-
-                  <button className="btn-premium btn-orange-to-black group w-full rounded-xl py-4 text-sm font-bold shadow-lg shadow-brand-orange/20 flex items-center justify-center gap-2">
-                    Send Inquiry
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </form>
-              </div>
+              <ContactForm />
             </div>
           </div>
         </div>
