@@ -8,9 +8,31 @@ const {
 } = WOOCOMMERCE_CONFIG
 
 const PRODUCTS_URL = `${WOOCOMMERCE_URL_BASE}/products`
-const CACHE_SECONDS = 0
+const CACHE_SECONDS = 300
 
 export const dynamic = 'force-dynamic'
+
+type WooCategory = {
+  id: number
+  name?: string
+  slug?: string
+}
+
+type WooAttribute = {
+  id: number
+  name?: string
+  slug?: string
+}
+
+type WooTerm = {
+  id: number
+  name?: string
+  slug?: string
+}
+
+let categoriesCache: Promise<WooCategory[]> | null = null
+let attributesCache: Promise<WooAttribute[]> | null = null
+const attributeTermsCache = new Map<number, Promise<WooTerm[]>>()
 
 function wooHeaders() {
   const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64')
@@ -30,20 +52,7 @@ function clampNumber(value: string | null, fallback: number, min: number, max: n
 async function findCategoryId(category: string, headers: HeadersInit) {
   if (/^\d+$/.test(category)) return category
 
-  const params = new URLSearchParams({
-    per_page: '100',
-    hide_empty: 'false',
-    search: category,
-  })
-
-  const response = await fetch(`${WOOCOMMERCE_URL_BASE}/products/categories?${params}`, {
-    headers,
-    cache: 'no-store',
-  })
-
-  if (!response.ok) return null
-
-  const categories = await response.json()
+  const categories = await getCategories(headers)
   const normalized = category.toLowerCase()
   const match = Array.isArray(categories)
     ? categories.find(
@@ -57,32 +66,73 @@ async function findCategoryId(category: string, headers: HeadersInit) {
   return match?.id ? String(match.id) : null
 }
 
+async function fetchWooCollection<T>(url: string, headers: HeadersInit) {
+  const items: T[] = []
+  let page = 1
+  let totalPages = 1
+
+  do {
+    const separator = url.includes('?') ? '&' : '?'
+    const response = await fetch(`${url}${separator}per_page=100&page=${page}`, {
+      headers,
+      next: { revalidate: CACHE_SECONDS },
+    })
+
+    if (!response.ok) break
+
+    const data = await response.json()
+    if (Array.isArray(data)) items.push(...data)
+
+    totalPages = Number(response.headers.get('x-wp-totalpages') || 1)
+    page += 1
+  } while (page <= totalPages)
+
+  return items
+}
+
+function getCategories(headers: HeadersInit) {
+  if (!categoriesCache) {
+    categoriesCache = fetchWooCollection<WooCategory>(
+      `${WOOCOMMERCE_URL_BASE}/products/categories?hide_empty=false`,
+      headers
+    )
+  }
+
+  return categoriesCache
+}
+
+function getAttributes(headers: HeadersInit) {
+  if (!attributesCache) {
+    attributesCache = fetchWooCollection<WooAttribute>(`${WOOCOMMERCE_URL_BASE}/products/attributes`, headers)
+  }
+
+  return attributesCache
+}
+
+function getAttributeTerms(attributeId: number, headers: HeadersInit) {
+  const cached = attributeTermsCache.get(attributeId)
+  if (cached) return cached
+
+  const request = fetchWooCollection<WooTerm>(
+    `${WOOCOMMERCE_URL_BASE}/products/attributes/${attributeId}/terms`,
+    headers
+  )
+
+  attributeTermsCache.set(attributeId, request)
+  return request
+}
+
 async function findAttributeFilter(terms: string[], headers: HeadersInit) {
   const cleanTerms = terms.map((term) => term.trim()).filter(Boolean)
   if (cleanTerms.length === 0) return null
 
-  const attrResponse = await fetch(`${WOOCOMMERCE_URL_BASE}/products/attributes?per_page=100`, {
-    headers,
-    cache: 'no-store',
-  })
-
-  if (!attrResponse.ok) return null
-
-  const attributes = await attrResponse.json()
+  const attributes = await getAttributes(headers)
   if (!Array.isArray(attributes)) return null
 
   for (const attr of attributes) {
-    const termsResponse = await fetch(
-      `${WOOCOMMERCE_URL_BASE}/products/attributes/${attr.id}/terms?per_page=100`,
-      {
-        headers,
-        cache: 'no-store',
-      }
-    )
+    if (!attr.slug) continue
 
-    if (!termsResponse.ok) continue
-
-    const attrTerms = await termsResponse.json()
+    const attrTerms = await getAttributeTerms(attr.id, headers)
     if (!Array.isArray(attrTerms)) continue
 
     const matches = cleanTerms
@@ -95,7 +145,7 @@ async function findAttributeFilter(terms: string[], headers: HeadersInit) {
             term.name?.toLowerCase().replace(/&amp;/g, '&') === normalized
         )
       })
-      .filter(Boolean)
+      .filter((term): term is WooTerm => Boolean(term))
 
     if (matches.length > 0) {
       return {
@@ -112,6 +162,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const isInitial = searchParams.get('initial') === 'true'
+  const fetchAll = searchParams.get('all') === 'true'
   const page = clampNumber(searchParams.get('page'), 1, 1, 9999)
   const perPage = isInitial
     ? 6
@@ -130,7 +181,7 @@ export async function GET(request: Request) {
     if (id) {
       const response = await fetch(`${PRODUCTS_URL}/${id}`, {
         headers,
-        cache: 'no-store',
+        next: { revalidate: CACHE_SECONDS },
       })
 
       if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)
@@ -144,8 +195,6 @@ export async function GET(request: Request) {
     }
 
     const params = new URLSearchParams({
-      per_page: String(perPage),
-      page: String(page),
       status: 'publish',
     })
 
@@ -163,9 +212,24 @@ export async function GET(request: Request) {
       params.set('attribute_term', attrFilter.attributeTerm)
     }
 
+    if (fetchAll) {
+      const products = await fetchWooCollection<any>(`${PRODUCTS_URL}?${params}`, headers)
+
+      return NextResponse.json({
+        products,
+        total: products.length,
+        totalPages: Math.max(1, Math.ceil(products.length / perPage)),
+        page,
+        perPage,
+      })
+    }
+
+    params.set('per_page', String(perPage))
+    params.set('page', String(page))
+
     const response = await fetch(`${PRODUCTS_URL}?${params}`, {
       headers,
-      cache: 'no-store',
+      next: { revalidate: CACHE_SECONDS },
     })
 
     if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)

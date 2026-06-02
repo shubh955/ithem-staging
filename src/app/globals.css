@@ -176,6 +176,16 @@ button {
   border-radius: 4px;
 }
 
+.click-here{
+  font-weight: 700 !important;
+  text-decoration: underline;
+  padding-left: 5px;
+}
+
+.click-here:hover{
+  color: #F97316;
+}
+
 /* Selection color */
 ::selection {
   background: #F97316;

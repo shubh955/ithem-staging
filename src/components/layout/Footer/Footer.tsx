@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, MapPin, ArrowRight } from 'lucide-react'
 import { SITE_CONFIG } from '@/lib/utils/constants'
+import { getTelHref, type SiteSettings } from '@/lib/settings'
 
 const footerLinks = {
   Products: [
@@ -26,7 +27,11 @@ const footerLinks = {
   ],
 }
 
-export function Footer() {
+type FooterProps = {
+  settings: SiteSettings
+}
+
+export function Footer({ settings }: FooterProps) {
   return (
     <footer className="relative overflow-hidden bg-white text-gray-800 border-t">
       {/* Large Logo Watermark - Positioned Far Right & Vertically Centered */}
@@ -77,24 +82,27 @@ export function Footer() {
               Foremost manufacturer of process control &amp; measuring instruments — temperature controllers, timers, counters, data loggers, and humidity controllers. Since 1996.
             </p>
             <div className="mt-6 space-y-2.5">
-              <a href={`tel:${SITE_CONFIG.phone1}`} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
+              <a href={getTelHref(settings.phone1)} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
                 <Phone className="h-4 w-4 text-brand-orange" />
-                {SITE_CONFIG.phone1}
+                {settings.phone1}
               </a>
-              <a href={`tel:${SITE_CONFIG.phone2}`} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
+              <a href={getTelHref(settings.phone2)} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
                 <Phone className="h-4 w-4 text-brand-orange" />
-                {SITE_CONFIG.phone1}
+                {settings.phone2}
               </a>
-              <a href={`mailto:${SITE_CONFIG.email}`} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
+              <a href={`mailto:${settings.email}`} className="flex items-center gap-2 text-sm text-gray-800 font-medium hover:text-brand-orange transition-colors">
                 <Mail className="h-4 w-4 text-brand-orange" />
-                {SITE_CONFIG.email}
+                {settings.email}
               </a>
               <div className="flex items-start gap-2 text-sm text-gray-800">
                 <MapPin className="h-4 w-4 mt-0.5 text-brand-orange shrink-0" />
                 <span className="text-xs font-medium leading-relaxed">
-                  {SITE_CONFIG.addressLine1}<br />
-                  {SITE_CONFIG.addressLine2}<br />
-                  {SITE_CONFIG.addressLine3}
+                  {settings.addressLines.map((line, index) => (
+                    <span key={line}>
+                      {line}
+                      {index < settings.addressLines.length - 1 && <br />}
+                    </span>
+                  ))}
                 </span>
               </div>
             </div>

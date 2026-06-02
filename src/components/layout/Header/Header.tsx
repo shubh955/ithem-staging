@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Menu, X, Phone, ChevronDown, Search, Mail, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { fetchCachedJson } from '@/lib/api/client-cache'
+import { getTelHref, type SiteSettings } from '@/lib/settings'
 import { NAV_ITEMS, type NavChild, type NavColumn, type NavItem } from './nav.config'
 
 type MenuTerm = {
@@ -172,7 +173,11 @@ const getProductGridColumnsClass = (count: number) => {
   return getGridColumnsClass(count)
 }
 
-export function Header() {
+type HeaderProps = {
+  settings: SiteSettings
+}
+
+export function Header({ settings }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
@@ -309,13 +314,13 @@ export function Header() {
         {/* Top bar */}
         <div className="hidden bg-dark py-2 text-[11px] font-semibold tracking-wider text-gray-300 border-b border-white/5 md:block">
           <div className="mx-auto flex max-w-7xl items-center justify-end px-4 sm:px-6 lg:px-8 gap-8">
-            <a href="mailto:sales@itherm.co.in" className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
+            <a href={`mailto:${settings.email}`} className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
               <Mail className="h-3.5 w-3.5 text-white group-hover:text-brand-orange transition-colors duration-300" />
-              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">sales@itherm.co.in</span>
+              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">{settings.email}</span>
             </a>
-            <a href="tel:+918591939916" className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
+            <a href={getTelHref(settings.phone1)} className="group flex items-center gap-2 text-[12px] font-medium transition-all duration-300">
               <Phone className="h-3.5 w-3.5 text-white group-hover:text-brand-orange transition-colors duration-300" />
-              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">+91 8591939916</span>
+              <span className="text-white group-hover:text-brand-orange transition-colors duration-300">{settings.phone1}</span>
             </a>
           </div>
         </div>
@@ -502,11 +507,12 @@ export function Header() {
                                   <div className="dis-area border-t border-red-100 pt-3">
                                     <a
                                       href={discontinuedProductsColumn.headingHref || '/products'}
-                                      className="inline-flex text-[13px] font-extrabold leading-snug text-red-600 underline decoration-red-300 decoration-2 underline-offset-4 transition-colors hover:text-red-700 hover:decoration-red-500"
+                                      className="inline-flex text-[13px] leading-snug font-semibold text-gray-700 transition-colors"
                                       onClick={() => setActiveMenu(null)}
                                     >
-                                      {discontinuedProductsColumn.heading || 'Discontinued Products'}
+                                     To view discontinued products:<p className="click-here">  Click Here</p>
                                     </a>
+                                       {/* {discontinuedProductsColumn.heading || 'Discontinued Products'} */}
                                     {discontinuedProductsColumn.items.length > 0 && (
                                       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                                         {discontinuedProductsColumn.items.map((child) => (
@@ -786,11 +792,11 @@ export function Header() {
               </div>
               <div className="pt-3 border-t border-gray-100 space-y-3">
                 <div className="flex flex-col gap-2 px-3 text-xs text-gray-500">
-                  <a href="tel:+918591939916" className="flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5" /> +91 8591939916
+                  <a href={getTelHref(settings.phone1)} className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5" /> {settings.phone1}
                   </a>
-                  <a href="mailto:sales@itherm.co.in" className="flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5" /> sales@itherm.co.in
+                  <a href={`mailto:${settings.email}`} className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" /> {settings.email}
                   </a>
                 </div>
                 <Link

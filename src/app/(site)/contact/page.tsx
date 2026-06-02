@@ -1,16 +1,19 @@
 import type { Metadata } from 'next'
 import { PageHeroSection } from '@/components/sections/PageHeroSection'
 import { ContactForm } from '@/components/sections/ContactForm'
-import { Phone, Mail, MapPin, Globe, Building2, MessageCircle, Clock, ArrowRight } from 'lucide-react'
-import { SITE_CONFIG } from '@/lib/utils/constants'
+import { Phone, Mail, Globe, Building2, MessageCircle, Clock } from 'lucide-react'
+import { getSiteSettings, getTelHref } from '@/lib/settings'
 
 export const metadata: Metadata = {
   title: 'Contact Us | I-Therm',
   description: 'Get in touch with I-Therm for sales and technical support. Head Office in Vasai (East), Palghar.',
 }
 
-export default function ContactPage() {
-  const waUrl = `https://wa.me/${SITE_CONFIG.whatsapp}?text=${encodeURIComponent('Hi, I have an inquiry about I-Therm.')}`
+export default async function ContactPage() {
+  const settings = await getSiteSettings()
+  const waUrl = settings.whatsapp
+    ? `https://wa.me/${settings.whatsapp.replace(/[^\d]/g, '')}?text=${encodeURIComponent('Hi, I have an inquiry about I-Therm.')}`
+    : ''
 
   return (
     <div className="bg-white">
@@ -42,9 +45,12 @@ export default function ContactPage() {
                     <h3 className="font-bold text-dark text-base mb-[10px]">Head Office</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
                       <span className="font-semibold text-dark">Innovative Instruments & Controls LLP</span><br />
-                      {SITE_CONFIG.addressLine1}<br />
-                      {SITE_CONFIG.addressLine2}<br />
-                      {SITE_CONFIG.addressLine3}
+                      {settings.addressLines.map((line, index) => (
+                        <span key={line}>
+                          {line}
+                          {index < settings.addressLines.length - 1 && <br />}
+                        </span>
+                      ))}
                     </p>
                   </div>
                 </div>
@@ -57,8 +63,13 @@ export default function ContactPage() {
                   <div className="flex-1">
                     <h3 className="font-bold text-dark text-base mb-[10px]">Phone & Inquiries</h3>
                     <div className="text-sm text-gray-600 space-y-1.5">
-                      <p><span className="font-medium text-dark">Sales:</span> {SITE_CONFIG.phone1} / 17 / {SITE_CONFIG.phone3}</p>
-                      <p><span className="font-medium text-dark">Support:</span> {SITE_CONFIG.supportPhone}</p>
+                      <p>
+                        <span className="font-medium text-dark">Sales:</span> 
+                        <a href={getTelHref(settings.phone1)} className="hover:text-brand-orange">{settings.phone1}</a> /
+                        <a href={getTelHref(settings.phone2)} className="hover:text-brand-orange">{settings.phone2}</a>
+                        </p>
+                      {/* <p><span className="font-medium text-dark">Sales 2:</span> </p> */}
+                      <p><span className="font-medium text-dark">Support:</span> <a href={getTelHref(settings.supportNumber)} className="hover:text-brand-orange">{settings.supportNumber}</a></p>
                     </div>
                   </div>
                 </div>
@@ -71,7 +82,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-dark text-base mb-[10px]">Email</h3>
-                      <p className="text-sm text-gray-600 truncate">{SITE_CONFIG.email}</p>
+                      <a href={`mailto:${settings.email}`} className="block text-sm text-gray-600 truncate hover:text-brand-orange">{settings.email}</a>
                     </div>
                   </div>
                   <div className="flex gap-4 p-5 rounded-2xl border border-gray-100 bg-gray-50/30">
@@ -104,21 +115,17 @@ export default function ContactPage() {
                     </div>
                   </div>
                 </div>
-                {/* <a 
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-premium btn-whatsapp-fill flex items-center justify-center gap-2 rounded-2xl p-5 font-bold shadow-sm"
-                >
-                  <svg 
-                    className="h-5 w-5 fill-current" 
-                    viewBox="0 0 24 24" 
-                    xmlns="http://www.w3.org/2000/svg"
+                {/* {waUrl && (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-premium btn-whatsapp-fill flex items-center justify-center gap-2 rounded-2xl p-5 font-bold shadow-sm"
                   >
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                  </svg>
-                  WhatsApp Support
-                </a> */}
+                    <MessageCircle className="h-5 w-5" />
+                    WhatsApp Support
+                  </a>
+                )} */}
               </div>
             </div>
 

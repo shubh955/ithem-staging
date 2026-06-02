@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { SITE_CONFIG } from '@/lib/utils/constants'
+import { getSiteSettings } from '@/lib/settings'
 import { Header } from '@/components/layout/Header/Header'
 import { Footer } from '@/components/layout/Footer/Footer'
 
@@ -31,13 +32,15 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const siteSettings = await getSiteSettings()
+
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="font-inter antialiased">
-        <Header />
+        <Header settings={siteSettings} />
         <main>{children}</main>
-        <Footer />
+        <Footer settings={siteSettings} />
       </body>
     </html>
   )

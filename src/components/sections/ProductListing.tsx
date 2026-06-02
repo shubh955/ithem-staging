@@ -61,6 +61,81 @@ const areTermsEqual = (a: string[], b: string[]) => {
   return a.every((term, index) => normalize(term) === normalize(b[index]))
 }
 
+const getFilterGroupName = (name: string) => {
+  const lowerName = name.toLowerCase()
+
+  if (lowerName.includes('series') || lowerName.includes('multifun') || lowerName.includes('multifunction')) return 'Series'
+  if (lowerName.includes('size')) return 'Size'
+  if (lowerName.includes('display') || lowerName.includes('digit')) return 'Display'
+  if (lowerName.includes('output') && !lowerName.includes('type')) return 'No of Outputs'
+  if (lowerName.includes('output') && lowerName.includes('type')) return 'Control Output 1 Type'
+  if (lowerName.includes('comm')) return 'Communication'
+  if (lowerName.includes('excitation')) return 'Excitation Voltage'
+
+  return name
+}
+
+const groupTermsByFilter = (terms: string[], products: Product[]) => {
+  const termGroups: Record<string, string[]> = {}
+
+  terms.forEach(term => {
+    const termNorm = normalize(term)
+    let foundGroup = 'Other'
+
+    for (const product of products) {
+      if (product.categories.some(c => normalize(c.name) === termNorm || normalize(c.slug) === termNorm)) {
+        foundGroup = 'Series'
+        break
+      }
+
+      const attr = product.attributes.find(a => a.options.some(o => normalize(o) === termNorm))
+
+      if (attr) {
+        foundGroup = getFilterGroupName(attr.name)
+        break
+      }
+    }
+
+    if (!termGroups[foundGroup]) termGroups[foundGroup] = []
+    termGroups[foundGroup].push(term)
+  })
+
+  return termGroups
+}
+
+const productMatchesTermGroup = (product: Product, groupName: string, termsInGroup: string[]) => {
+  return termsInGroup.some(term => {
+    const termNorm = normalize(term)
+
+    if (groupName === 'Series') {
+      const categoryMatch = product.categories.some(cat =>
+        normalize(cat.name) === termNorm || normalize(cat.slug) === termNorm
+      )
+
+      if (categoryMatch) return true
+    }
+
+    return product.attributes.some(attr => {
+      if (getFilterGroupName(attr.name) !== groupName) return false
+
+      return attr.options.some(opt => {
+        const optNorm = normalize(opt)
+        return optNorm === termNorm || optNorm.includes(termNorm) || termNorm.includes(optNorm)
+      })
+    })
+  })
+}
+
+const productMatchesTerms = (product: Product, terms: string[], sourceProducts: Product[]) => {
+  if (terms.length === 0) return true
+
+  const termGroups = groupTermsByFilter(terms, sourceProducts)
+
+  return Object.entries(termGroups).every(([groupName, termsInGroup]) =>
+    productMatchesTermGroup(product, groupName, termsInGroup)
+  )
+}
+
 export function ProductListing() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -70,9 +145,8 @@ export function ProductListing() {
   const [products, setProducts] = useState<Product[]>([])
   const [attributes, setAttributes] = useState<Attribute[]>([])
   const [loading, setLoading] = useState(true)
-  const [totalProducts, setTotalProducts] = useState(0)
-  const [serverTotalPages, setServerTotalPages] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get('category'))
   const [selectedTerms, setSelectedTerms] = useState<string[]>(initialTerms)
   
@@ -95,15 +169,23 @@ export function ProductListing() {
   }, [])
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim())
+      setCurrentPage(1)
+    }, 250)
+
+    return () => window.clearTimeout(timer)
+  }, [searchQuery])
+
+  useEffect(() => {
     const loadProducts = async () => {
       const params = new URLSearchParams({
-        page: String(currentPage),
-        per_page: String(itemsPerPage),
+        all: 'true',
+        per_page: '100',
       })
 
       if (selectedCategory) params.set('category', selectedCategory)
-      if (selectedTerms.length > 0) params.set('terms', selectedTerms.join(','))
-      if (searchQuery.trim()) params.set('search', searchQuery.trim())
+      if (debouncedSearchQuery) params.set('search', debouncedSearchQuery)
 
       try {
         setLoading(true)
@@ -115,20 +197,16 @@ export function ProductListing() {
 
         const nextProducts = Array.isArray(data) ? data : data.products || []
         setProducts(nextProducts)
-        setTotalProducts(Array.isArray(data) ? nextProducts.length : data.total || nextProducts.length)
-        setServerTotalPages(Array.isArray(data) ? 1 : data.totalPages || 1)
       } catch (error) {
         console.error('Error loading catalog:', error)
         setProducts([])
-        setTotalProducts(0)
-        setServerTotalPages(1)
       } finally {
         setLoading(false)
       }
     }
 
     loadProducts()
-  }, [currentPage, itemsPerPage, searchQuery, selectedCategory, selectedTerms])
+  }, [debouncedSearchQuery, selectedCategory])
 
   useEffect(() => {
     const category = searchParams.get('category')
@@ -138,6 +216,10 @@ export function ProductListing() {
     setSelectedTerms(prev => areTermsEqual(prev, finalTerms) ? prev : finalTerms)
     setCurrentPage(prev => prev === 1 ? prev : 1)
   }, [searchParams])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedTerms])
 
   // 1. First, compute the base filtered products (only by search and category)
   const categoryProducts = useMemo(() => {
@@ -164,9 +246,9 @@ export function ProductListing() {
 
     return products.filter(product => {
       // Robust search
-      const matchesSearch = !searchQuery || 
-                           product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           product.short_description.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = !debouncedSearchQuery ||
+                           product.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+                           product.short_description.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
       
       // Flexible Category Matching: Ensures parent categories show products from child series
       if (!selectedCategory) return matchesSearch;
@@ -179,88 +261,13 @@ export function ProductListing() {
 
       return matchesSearch && matchesCategory
     })
-  }, [products, searchQuery, selectedCategory, attributes])
+  }, [products, debouncedSearchQuery, selectedCategory, attributes])
 
   // 2. Compute the fully filtered products (including terms)
   const filteredProducts = useMemo(() => {
     if (selectedTerms.length === 0) return categoryProducts;
 
-    // 1. Group selected terms by their attribute/category source for AND/OR logic
-    const termGroups: { [key: string]: string[] } = {};
-    
-    selectedTerms.forEach(term => {
-      const termNorm = normalize(term);
-      let foundGroup = 'Other';
-
-      // Find the group for this term by looking at categoryProducts
-      for (const p of categoryProducts) {
-        // Check if it's a category (Series)
-        if (p.categories.some(c => normalize(c.name) === termNorm || normalize(c.slug) === termNorm)) {
-          foundGroup = 'Series';
-          break;
-        }
-        // Check attributes
-        const attr = p.attributes.find(a => a.options.some(o => normalize(o) === termNorm));
-        if (attr) {
-          const name = attr.name.toLowerCase();
-          if (name.includes('series') || name.includes('multifun') || name.includes('multifunction')) foundGroup = 'Series';
-          else if (name.includes('size')) foundGroup = 'Size';
-          else if (name.includes('display') || name.includes('digit')) foundGroup = 'Display';
-          else if (name.includes('output') && !name.includes('type')) foundGroup = 'No of Outputs';
-          else if (name.includes('output') && name.includes('type')) foundGroup = 'Control Output 1 Type';
-          else if (name.includes('comm')) foundGroup = 'Communication';
-          else if (name.includes('excitation')) foundGroup = 'Excitation Voltage';
-          else foundGroup = attr.name;
-          break;
-        }
-      }
-      
-      if (!termGroups[foundGroup]) termGroups[foundGroup] = [];
-      termGroups[foundGroup].push(term);
-    });
-
-    // 2. Filter products: Must match ALL groups (AND), and at least one term in each group (OR)
-    return categoryProducts.filter(product => {
-      return Object.entries(termGroups).every(([groupName, termsInGroup]) => {
-        // Product must match AT LEAST ONE term in this group
-        return termsInGroup.some(term => {
-          const termNorm = normalize(term);
-          
-          // If the group is "Series", also check categories
-          if (groupName === 'Series') {
-            const catMatch = product.categories.some(cat => {
-              const catNameNorm = normalize(cat.name);
-              const catSlugNorm = normalize(cat.slug);
-              return catNameNorm === termNorm || catSlugNorm === termNorm;
-            });
-            if (catMatch) return true;
-          }
-
-          // Check attributes
-          return product.attributes.some(attr => {
-            // Only match against the correct attribute group for better accuracy
-            const attrGroupName = (n: string) => {
-              const ln = n.toLowerCase();
-              if (ln.includes('series') || ln.includes('multifun') || ln.includes('multifunction')) return 'Series';
-              if (ln.includes('size')) return 'Size';
-              if (ln.includes('display') || ln.includes('digit')) return 'Display';
-              if (ln.includes('output') && !ln.includes('type')) return 'No of Outputs';
-              if (ln.includes('output') && ln.includes('type')) return 'Control Output 1 Type';
-              if (ln.includes('comm')) return 'Communication';
-              if (ln.includes('excitation')) return 'Excitation Voltage';
-              return n;
-            };
-
-            if (attrGroupName(attr.name) !== groupName) return false;
-
-            return attr.options.some(opt => {
-              const optNorm = normalize(opt);
-              return optNorm === termNorm || optNorm.includes(termNorm) || termNorm.includes(optNorm);
-            });
-          });
-        });
-      });
-    });
+    return categoryProducts.filter(product => productMatchesTerms(product, selectedTerms, categoryProducts));
   }, [categoryProducts, selectedTerms])
 
   // 3. Compute available filters (Always Static for full Multi-select)
@@ -319,13 +326,7 @@ export function ProductListing() {
         const name = attr.name.toLowerCase();
         let targetName = attr.name;
         
-        if (name.includes('series') || name.includes('multifun') || name.includes('multifunction')) targetName = 'Series';
-        else if (name.includes('size')) targetName = 'Size';
-        else if (name.includes('display') || name.includes('digit')) targetName = 'Display';
-        else if (name.includes('output') && !name.includes('type')) targetName = 'No of Outputs';
-        else if (name.includes('output') && name.includes('type')) targetName = 'Control Output 1 Type';
-        else if (name.includes('comm')) targetName = 'Communication';
-        else if (name.includes('excitation')) targetName = 'Excitation Voltage';
+        targetName = getFilterGroupName(name);
 
         if (!filterMap.has(targetName)) {
           filterMap.set(targetName, new Set());
@@ -366,8 +367,8 @@ export function ProductListing() {
       counts[normalize(term.slug)] = count;
     });
     
-    // Count based on the products matching the CURRENT selection
-    filteredProducts.forEach(product => {
+    // Count against the full candidate list, not the current paginated page.
+    categoryProducts.forEach(product => {
       // Categories
       product.categories.forEach(cat => {
         const normName = normalize(cat.name);
@@ -384,12 +385,14 @@ export function ProductListing() {
       });
     });
     return counts;
-  }, [attributes, filteredProducts, selectedCategory]);
+  }, [attributes, categoryProducts, selectedCategory]);
 
-  const totalPages = serverTotalPages
+  const totalProducts = filteredProducts.length
+  const totalPages = Math.max(1, Math.ceil(totalProducts / itemsPerPage))
   const paginatedProducts = useMemo(() => {
-    return filteredProducts
-  }, [filteredProducts])
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage)
+  }, [currentPage, filteredProducts])
   const paginationItems = useMemo(() => {
     const items: Array<number | 'ellipsis-start' | 'ellipsis-end'> = []
 
@@ -412,6 +415,12 @@ export function ProductListing() {
 
     items.push(totalPages)
     return items
+  }, [currentPage, totalPages])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
   }, [currentPage, totalPages])
 
   const toggleTerm = (term: string) => {

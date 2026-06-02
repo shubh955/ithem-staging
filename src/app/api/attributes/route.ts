@@ -3,6 +3,8 @@ import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants';
 
 export const dynamic = 'force-dynamic';
 
+const CACHE_SECONDS = 300;
+
 const normalizeText = (value: string) => (value || '')
   .toLowerCase()
   .replace(/&amp;/g, '&')
@@ -36,7 +38,7 @@ async function fetchWooCollection(apiUrl: string, endpoint: string, headers: Hea
     const separator = endpoint.includes('?') ? '&' : '?';
     const response = await fetch(`${apiUrl}${endpoint}${separator}per_page=100&page=${page}`, {
       headers,
-      cache: 'no-store',
+      next: { revalidate: CACHE_SECONDS },
     });
 
     if (!response.ok) break;
