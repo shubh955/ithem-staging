@@ -355,37 +355,45 @@ export function ProductListing() {
   const filterCounts = useMemo(() => {
     const counts: { [key: string]: number } = {};
 
-    const selectedSlugNorm = selectedCategory ? normalize(selectedCategory) : null;
-    const currentCatData = selectedSlugNorm ? attributes.find(a => 
-      normalize(a.slug) === selectedSlugNorm || 
-      normalize(a.name) === selectedSlugNorm
-    ) : null;
+    const selectedGroups = groupTermsByFilter(selectedTerms, categoryProducts);
 
-    currentCatData?.terms.forEach(term => {
-      const count = typeof (term as any).count === 'number' ? (term as any).count : 0;
-      counts[normalize(term.name)] = count;
-      counts[normalize(term.slug)] = count;
-    });
-    
-    // Count against the full candidate list, not the current paginated page.
     categoryProducts.forEach(product => {
-      // Categories
+      // Count Categories (Series)
       product.categories.forEach(cat => {
         const normName = normalize(cat.name);
         const normSlug = normalize(cat.slug);
-        counts[normName] = (counts[normName] || 0) + 1;
-        if (normSlug !== normName) counts[normSlug] = (counts[normSlug] || 0) + 1;
-      });
-      // Attributes
-      product.attributes.forEach(attr => {
-        attr.options.forEach(opt => {
-          const normOpt = normalize(opt);
-          counts[normOpt] = (counts[normOpt] || 0) + 1;
+        
+        const matchesOtherGroups = Object.entries(selectedGroups).every(([gName, gTerms]) => {
+          if (gName === 'Series') return true;
+          return productMatchesTermGroup(product, gName, gTerms);
         });
+
+        if (matchesOtherGroups) {
+          counts[normName] = (counts[normName] || 0) + 1;
+          if (normSlug !== normName) counts[normSlug] = (counts[normSlug] || 0) + 1;
+        }
+      });
+
+      // Count Attributes
+      product.attributes.forEach(attr => {
+        const attrGroup = getFilterGroupName(attr.name);
+        
+        const matchesOtherGroups = Object.entries(selectedGroups).every(([gName, gTerms]) => {
+          if (gName === attrGroup) return true;
+          return productMatchesTermGroup(product, gName, gTerms);
+        });
+
+        if (matchesOtherGroups) {
+          attr.options.forEach(opt => {
+            const normOpt = normalize(opt);
+            counts[normOpt] = (counts[normOpt] || 0) + 1;
+          });
+        }
       });
     });
+    
     return counts;
-  }, [attributes, categoryProducts, selectedCategory]);
+  }, [categoryProducts, selectedTerms]);
 
   const totalProducts = filteredProducts.length
   const totalPages = Math.max(1, Math.ceil(totalProducts / itemsPerPage))

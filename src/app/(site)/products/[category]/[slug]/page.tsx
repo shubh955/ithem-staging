@@ -65,12 +65,42 @@ export default function ProductDetailPage() {
 
         if (nextProduct?.id) {
           setProduct(nextProduct)
-        }
-
-        setRelated([])
-
-        if (!nextProduct?.id) {
+          
+          try {
+            if (nextProduct.categories && nextProduct.categories.length > 0) {
+              const categorySlug = nextProduct.categories[0].slug
+              const relatedData = await fetchCachedJson<any>(`/api/products?category=${categorySlug}&per_page=4`)
+              
+              if (relatedData && Array.isArray(relatedData.products)) {
+                const relatedProducts = relatedData.products
+                  .filter((p: any) => p.id !== nextProduct.id)
+                  .slice(0, 3)
+                  .map((p: any) => ({
+                    id: p.id,
+                    slug: p.slug,
+                    category: p.categories[0]?.slug || 'all',
+                    name: p.name,
+                    image: p.images[0]?.src || '',
+                    model: (p.attributes.find((a: any) => a.name.toLowerCase().includes('model'))?.options[0] || p.name.split(' ').pop() || '').replace(/&amp;/g, '&'),
+                    size: (p.attributes.find((a: any) => a.name.toLowerCase() === 'size')?.options[0] || '').replace(/&amp;/g, '&'),
+                    display: (p.attributes.find((a: any) => a.name.toLowerCase().includes('digit') || a.name.toLowerCase().includes('display'))?.options[0] || '').replace(/&amp;/g, '&'),
+                    input: (p.attributes.find((a: any) => a.name.toLowerCase().includes('input'))?.options[0] || '').replace(/&amp;/g, '&'),
+                    short_description: p.short_description
+                  }))
+                setRelated(relatedProducts)
+              } else {
+                setRelated([])
+              }
+            } else {
+              setRelated([])
+            }
+          } catch (error) {
+            console.error('Error fetching related products:', error)
+            setRelated([])
+          }
+        } else {
           setProduct(null)
+          setRelated([])
         }
         if (Array.isArray(tablesData)) {
           setTables(tablesData)

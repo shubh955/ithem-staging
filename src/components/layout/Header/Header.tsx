@@ -186,6 +186,7 @@ export function Header({ settings }: HeaderProps) {
   const [hoveredDynamicImage, setHoveredDynamicImage] = useState<string | null>(null)
   const [attributes, setAttributes] = useState<MenuCategory[]>([])
   const [productsMenuLoading, setProductsMenuLoading] = useState(true)
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     setHoveredDynamicImage(null)
@@ -240,7 +241,7 @@ export function Header({ settings }: HeaderProps) {
 
     const fetchAllProducts = async () => {
       try {
-        const data = await fetchCachedJson<{ products?: any[] }>('/api/products?per_page=100')
+        const data = await fetchCachedJson<{ products?: any[] }>('/api/products?all=true')
         if (Array.isArray(data)) {
           setAllProducts(data)
         } else if (Array.isArray(data?.products)) {
@@ -256,30 +257,20 @@ export function Header({ settings }: HeaderProps) {
   }, [])
 
   useEffect(() => {
-    const query = searchQuery.trim()
+    const query = searchQuery.trim().toLowerCase()
 
     if (query.length === 0) {
       setSearchResults([])
       return
     }
 
-    const loadSearchResults = async () => {
-      try {
-        const params = new URLSearchParams({
-          search: query,
-          per_page: '6',
-          page: '1',
-        })
-        const data = await fetchCachedJson<{ products?: any[] }>(`/api/products?${params.toString()}`)
-        setSearchResults(Array.isArray(data) ? data.slice(0, 6) : data.products || [])
-      } catch (err) {
-        console.error('Failed to search products:', err)
-        setSearchResults([])
-      }
-    }
+    // Fast client-side filter — title/name only, no API call
+    const results = allProducts
+      .filter((p: any) => p.name?.toLowerCase().includes(query))
+      .slice(0, 6)
 
-    loadSearchResults()
-  }, [searchQuery])
+    setSearchResults(results)
+  }, [searchQuery, allProducts])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -355,7 +346,10 @@ export function Header({ settings }: HeaderProps) {
                 ? allProducts.find((p: any) => p.featured && p.images?.[0]?.src) || allProducts.find((p: any) => p.images?.[0]?.src)
                 : null;
 
-              const displayImage = hoveredDynamicImage || hoveredItem?.image || dynamicDefaultProduct?.images?.[0]?.src || item.defaultImage || '/logo.png';
+              const defaultFallback = isProductsMenu ? '/assets/images/default-image.jpg' : (item.defaultImage || '/logo.png');
+              const displayImage = hoveredDynamicImage || hoveredItem?.image || dynamicDefaultProduct?.images?.[0]?.src || defaultFallback;
+              const sampleImage = defaultFallback;
+              const isImageLoaded = loadedImages[displayImage] || displayImage === sampleImage;
               const displayLabel = hoveredItem?.label || (isProductsMenu ? 'Industrial Instruments' : item.label);
               const displayDesc = hoveredItem?.description || (isProductsMenu ? 'Explore our comprehensive range of high-quality process control instruments.' : 'Innovative Instruments & Controls LLP (I-Therm) — foremost manufacturer of process control instruments since 1996.');
 
@@ -406,12 +400,29 @@ export function Header({ settings }: HeaderProps) {
                               "relative overflow-hidden bg-gray-50",
                               isProductsMenu ? "aspect-[16/10] rounded-xl shadow-md" : "aspect-[4/3] rounded-2xl shadow-lg"
                             )}>
+                              {/* Sample image underneath */}
                               <Image
+                                src={sampleImage}
+                                alt="Loading placeholder"
+                                fill
+                                className={cn(
+                                  "object-contain transition-opacity duration-500",
+                                  isImageLoaded ? "opacity-0" : "opacity-100"
+                                )}
+                                sizes={isProductsMenu ? "220px" : "300px"}
+                              />
+                              {/* Dynamic image on top */}
+                              <Image
+                                key={displayImage}
                                 src={displayImage}
                                 alt={displayLabel}
                                 fill
-                                className="object-cover transition-all duration-700 hover:scale-110"
+                                className={cn(
+                                  "object-contain transition-all duration-700 hover:scale-110",
+                                  isImageLoaded ? "opacity-100" : "opacity-0"
+                                )}
                                 sizes={isProductsMenu ? "220px" : "300px"}
+                                onLoad={() => setLoadedImages(prev => ({ ...prev, [displayImage]: true }))}
                               />
                             </div>
                             <div className={cn(isProductsMenu ? "mt-3" : "mt-5")}>
@@ -722,27 +733,6 @@ export function Header({ settings }: HeaderProps) {
                                 </div>
                               ) : (displayItem.children && displayItem.children.length > 0) || discontinuedProductsColumn ? (
                                 <>
-                                  {isProductsMenu && discontinuedProductsColumn && (
-                                    <div className="border-b border-red-100 pb-3">
-                                      <a
-                                        href={discontinuedProductsColumn.headingHref || '/products'}
-                                        onClick={() => setMobileOpen(false)}
-                                        className="block rounded-lg px-2 py-1.5 text-sm font-extrabold text-red-600 underline decoration-red-300 decoration-2 underline-offset-4"
-                                      >
-                                        {discontinuedProductsColumn.heading || 'Discontinued Products'}
-                                      </a>
-                                      {discontinuedProductsColumn.items.map((child) => (
-                                        <a
-                                          key={child.href}
-                                          href={child.href}
-                                          onClick={() => setMobileOpen(false)}
-                                          className="block rounded-lg px-2 py-1 text-sm font-semibold text-red-500 underline decoration-red-200 underline-offset-4"
-                                        >
-                                          {child.label}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
                                   {displayItem.children?.map((col) => (
                                     <div key={col.heading || col.items[0]?.href}>
                                       {col.heading && (
@@ -766,6 +756,32 @@ export function Header({ settings }: HeaderProps) {
                                       ))}
                                     </div>
                                   ))}
+                                  {isProductsMenu && discontinuedProductsColumn && (
+                                    <div className="dis-area border-t border-red-100 pt-3 mt-3">
+                                      <a
+                                        href={discontinuedProductsColumn.headingHref || '/products'}
+                                        className="inline-flex text-[13px] leading-snug font-semibold text-gray-700 transition-colors px-2"
+                                        onClick={() => setMobileOpen(false)}
+                                      >
+                                       To view discontinued products:<p className="click-here">  Click Here</p>
+                                      </a>
+                                      {discontinuedProductsColumn.items.length > 0 && (
+                                        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-2">
+                                          {discontinuedProductsColumn.items.map((child) => (
+                                            <li key={child.href}>
+                                              <a
+                                                href={child.href}
+                                                className="text-[13px] font-semibold leading-6 text-red-500 underline decoration-red-200 underline-offset-4 transition-colors hover:text-red-700"
+                                                onClick={() => setMobileOpen(false)}
+                                              >
+                                                {child.label}
+                                              </a>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                  )}
                                 </>
                               ) : (
                                 <div className="px-2 py-3 text-sm font-semibold text-gray-500">

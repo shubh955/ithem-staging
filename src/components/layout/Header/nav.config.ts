@@ -34,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
         heading: 'Documentation',
         items: [
           { label: 'Technical Datasheets', href: '/datasheets', description: 'Download technical specs for all models' },
+          { label: 'Operating Manuals', href: '/operating-manuals', description: 'Download operating and instruction manuals' },
           { label: 'Software & Catalogs', href: '/downloads', description: 'Download utility software and product catalogs' },
           // { label: 'Operating Manuals', href: '/resources/guides', description: 'AI-5742, Humi-Temp & more' },
           { label: 'FAQs', href: '/resources/faqs' },

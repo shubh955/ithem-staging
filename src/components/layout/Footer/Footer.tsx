@@ -6,24 +6,24 @@ import { getTelHref, type SiteSettings } from '@/lib/settings'
 
 const footerLinks = {
   Products: [
-    { label: 'Temperature Controllers', href: '/products/temperature-controllers' },
-    { label: 'Timers & Counters (I-Count)', href: '/products/timers-counters' },
-    { label: 'Humidity Controllers', href: '/products/humidity-controllers' },
-    { label: 'Data Loggers', href: '/products/data-loggers' },
-    { label: 'ULT Controllers', href: '/products/ult-controllers' },
+    { label: 'Temperature Controller', href: '/products?category=temperature-controller' },
+    { label: 'Process Controller', href: '/products?category=process-controller' },
+    { label: 'Process Indicators', href: '/products?category=process-indicator' },
+    { label: 'Counters', href: '/products?category=counter' },
+    { label: 'Timers', href: '/products?category=timer' },
+    { label: 'Multifunction Timers & Counters', href: '/products?category=multifunction-timer-and-counter' },
+    { label: 'Transmitter', href: '/products?category=transmitter' },
     { label: 'All Products', href: '/products' },
   ],
   Company: [
     { label: 'About Us', href: '/about' },
     { label: 'Industries Served', href: '/industries' },
-    { label: 'Application Specific', href: '/solutions' },
     { label: 'Contact Us', href: '/contact' },
   ],
   Resources: [
-    { label: 'Operating Manuals', href: '/resources/guides' },
-    { label: 'Product Catalog 2024', href: '/resources/catalogs' },
-    { label: 'FAQs', href: '/resources/faqs' },
-    { label: 'Case Studies', href: '/resources/case-studies' },
+    { label: 'Operating Manuals', href: '/operating-manuals' },
+    { label: 'Technical Datasheets', href: '/datasheets' },
+    { label: 'Software & Catalogs', href: '/downloads' },
   ],
 }
 

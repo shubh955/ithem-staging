@@ -244,6 +244,10 @@ button {
     padding: 5rem 2.5rem;
   }
 
+  .dis-area p{
+    font-size: 12px !important;
+  }
+
   p {
     font-size: 16px !important;
     line-height: 1.6 !important;

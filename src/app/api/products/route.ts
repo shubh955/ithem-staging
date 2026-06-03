@@ -49,6 +49,27 @@ function clampNumber(value: string | null, fallback: number, min: number, max: n
   return Math.min(max, Math.max(min, Math.floor(parsed)))
 }
 
+function cleanProductData(data: any): any {
+  if (typeof data === 'string') {
+    return data.replace(/&amp;/g, '&').replace(/&quot;/g, '"')
+  }
+  if (Array.isArray(data)) {
+    return data.map((item) => cleanProductData(item))
+  }
+  if (data !== null && typeof data === 'object') {
+    const cleaned: any = {}
+    for (const [key, value] of Object.entries(data)) {
+      if (['description', 'short_description', 'src', 'href'].includes(key)) {
+        cleaned[key] = value
+      } else {
+        cleaned[key] = cleanProductData(value)
+      }
+    }
+    return cleaned
+  }
+  return data
+}
+
 async function findCategoryId(category: string, headers: HeadersInit) {
   if (/^\d+$/.test(category)) return category
 
@@ -191,7 +212,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 })
       }
 
-      return NextResponse.json(product)
+      return NextResponse.json(cleanProductData(product))
     }
 
     const params = new URLSearchParams({
@@ -216,7 +237,7 @@ export async function GET(request: Request) {
       const products = await fetchWooCollection<any>(`${PRODUCTS_URL}?${params}`, headers)
 
       return NextResponse.json({
-        products,
+        products: cleanProductData(products),
         total: products.length,
         totalPages: Math.max(1, Math.ceil(products.length / perPage)),
         page,
@@ -239,7 +260,7 @@ export async function GET(request: Request) {
     const totalPages = Number(response.headers.get('x-wp-totalpages') || 1)
 
     return NextResponse.json({
-      products: Array.isArray(products) ? products : [],
+      products: cleanProductData(Array.isArray(products) ? products : []),
       total,
       totalPages,
       page,
