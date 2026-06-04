@@ -587,7 +587,7 @@ export function Header({ settings }: HeaderProps) {
                           {searchResults.map((product) => (
                             <a
                               key={product.id}
-                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                              href={`/products/${product.slug}?id=${product.id}`}
                               onClick={() => {
                                 setShowSearch(false)
                                 setSearchQuery('')
@@ -620,7 +620,7 @@ export function Header({ settings }: HeaderProps) {
                               {defaultProducts.map((product) => (
                                 <a
                                   key={product.id}
-                                  href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                                  href={`/products/${product.slug}?id=${product.id}`}
                                   onClick={() => {
                                     setShowSearch(false)
                                     setSearchQuery('')
@@ -644,7 +644,7 @@ export function Header({ settings }: HeaderProps) {
                           {defaultProducts.map((product) => (
                             <a
                               key={product.id}
-                              href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                              href={`/products/${product.slug}?id=${product.id}`}
                               onClick={() => {
                                 setShowSearch(false)
                                 setSearchQuery('')

@@ -324,7 +324,7 @@ export default function ProductDetailPage() {
                   </h3>
                   <p className="text-red-700/80 text-sm mb-4">This product has been discontinued and replaced by a newer model.</p>
                   <Link
-                    href={`/products/replacement/${uiProduct.replacement_product.slug}?id=${uiProduct.replacement_product.id}`}
+                    href={`/products/${uiProduct.replacement_product.slug}?id=${uiProduct.replacement_product.id}`}
                     className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest shadow-md transition-colors"
                   >
                     View Replacement: {uiProduct.replacement_product.name}
@@ -596,7 +596,7 @@ export default function ProductDetailPage() {
                 >
                   {/* Image Section */}
                   <a
-                    href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
+                    href={`/products/${rel.slug}?id=${rel.id}`}
                     className="relative w-full h-[220px] overflow-hidden bg-white group-hover:bg-gray-50/30 transition-colors duration-500"
                   >
                     {rel.image ? (
@@ -618,7 +618,7 @@ export default function ProductDetailPage() {
                   <div className="p-6 flex flex-col flex-1 border-t border-gray-50">
                     <div className="text-center mb-6">
                       <a
-                        href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
+                        href={`/products/${rel.slug}?id=${rel.id}`}
                         className="text-lg font-bold text-[#0070bc] hover:text-dark transition-colors duration-300 block leading-snug"
                       >
                         {rel.name}
@@ -655,7 +655,7 @@ export default function ProductDetailPage() {
 
                     <div className="mt-auto">
                       <a
-                        href={`/products/${rel.category}/${rel.slug}?id=${rel.id}`}
+                        href={`/products/${rel.slug}?id=${rel.id}`}
                         className="btn-premium btn-black-to-orange flex items-center justify-center gap-2 w-full py-4 text-[11px] font-bold uppercase tracking-[0.2em] rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
                       >
                         View Technical Data

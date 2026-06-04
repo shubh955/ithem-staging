@@ -77,7 +77,7 @@ export default function ProductCategoryPage({ params }: Props) {
               {products.map((product) => (
                 <Link
                   key={product.slug}
-                  href={`/products/${params.category}/${product.slug}`}
+                  href={`/products/${product.slug}`}
                   className="group flex flex-col rounded-2xl border border-gray-100 bg-white overflow-hidden hover:border-brand-orange/30 hover:shadow-md transition-all duration-200"
                 >
                   {/* Image */}

@@ -80,7 +80,7 @@ export async function FeaturedProductsSection() {
             return (
               <a
                 key={product.id}
-                href={`/products/${mainCategory}/${product.slug}?id=${product.id}`}
+                href={`/products/${product.slug}?id=${product.id}`}
                 className="group feature-product-card flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden hover:border-brand-orange/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
               >
                 {/* Image area */}

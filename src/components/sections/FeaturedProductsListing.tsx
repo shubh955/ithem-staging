@@ -118,7 +118,7 @@ export function FeaturedProductsListing() {
               return (
                 <a
                   key={product.id}
-                  href={`/products/${mainCategory}/${product.slug}?id=${product.id}`}
+                  href={`/products/${product.slug}?id=${product.id}`}
                   className="group feature-product-card flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:border-brand-orange/40 hover:shadow-xl"
                 >
                   <div className="upper-cover relative flex h-48 items-center justify-center overflow-hidden border-b border-gray-100 bg-gray-50">

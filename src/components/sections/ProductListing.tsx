@@ -653,7 +653,7 @@ export function ProductListing() {
                   >
                     {/* Image Section - Fixed Height to ensure consistency */}
                     <a
-                      href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                      href={`/products/${product.slug}?id=${product.id}`}
                       className="relative w-full overflow-hidden bg-white group-hover:bg-gray-50/50 transition-colors duration-500 height-190"
                     >
                       {product.images[0] ? (
@@ -685,7 +685,7 @@ export function ProductListing() {
                     <div className="p-4 flex flex-col flex-1 border-t border-gray-50">
                       <div className="text-center mb-6">
                         <a
-                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                          href={`/products/${product.slug}?id=${product.id}`}
                           className="text-[16px] font-bold text-[#0070bc] hover:text-dark transition-colors duration-300 block leading-snug"
                         >
                           {product.name}
@@ -724,7 +724,7 @@ export function ProductListing() {
                           <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-center mb-2">
                             <span className="block text-[10px] text-red-600 font-bold uppercase tracking-widest mb-1.5">Model Discontinued</span>
                             <a
-                              href={`/products/replacement/${product.replacement_product.slug}?id=${product.replacement_product.id}`}
+                              href={`/products/${product.replacement_product.slug}?id=${product.replacement_product.id}`}
                               className="text-[11px] font-bold text-red-700 hover:text-red-800 underline decoration-red-300 underline-offset-2 transition-colors"
                             >
                               View Replacement: {product.replacement_product.name}
@@ -732,7 +732,7 @@ export function ProductListing() {
                           </div>
                         )}
                         <a
-                          href={`/products/${product.categories[0]?.slug || 'uncategorized'}/${product.slug}?id=${product.id}`}
+                          href={`/products/${product.slug}?id=${product.id}`}
                           className="btn-premium btn-black-to-orange flex items-center justify-center gap-2 w-full py-3.5 text-[11px] font-bold uppercase tracking-[0.2em] rounded-lg shadow-lg"
                         >
                           View Details
