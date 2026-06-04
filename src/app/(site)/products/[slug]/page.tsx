@@ -47,8 +47,15 @@ export async function generateMetadata({
         .replace(/\s+/g, ' ')
         .trim();
         
-      const title = `${product.name} | I-Therm`;
-      const desc = plainDescription.slice(0, 155) || `Learn more about ${product.name} by I-Therm.`;
+      const title = product.yoast_head_json?.og_title || product.yoast_head_json?.title || `${product.name} | I-Therm`;
+      let desc = product.yoast_head_json?.og_description || product.yoast_head_json?.description || plainDescription || `Learn more about ${product.name} by I-Therm.`;
+      
+      // SEO Best Practice: Truncate description to max 160 characters cleanly
+      if (desc.length > 160) {
+        const truncated = desc.substring(0, 157);
+        const lastSpace = truncated.lastIndexOf(' ');
+        desc = (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
+      }
       
       return {
         title,
