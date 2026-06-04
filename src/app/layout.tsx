@@ -13,6 +13,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  referrer: 'no-referrer',
   metadataBase: new URL(SITE_CONFIG.url),
   title: {
     default: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
