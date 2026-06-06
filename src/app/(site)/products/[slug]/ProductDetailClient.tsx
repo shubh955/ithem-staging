@@ -183,14 +183,13 @@ export default function ProductDetailPage() {
     // Extract YouTube video URL from meta_data
     const rawVideoUrl = product.meta_data?.find(m => m.key === '_video_url')?.value || ''
     let videoEmbedUrl: string | null = null
-    if (rawVideoUrl && rawVideoUrl.includes('youtube.com/watch')) {
-      try {
-        const videoId = new URL(rawVideoUrl).searchParams.get('v')
-        if (videoId) videoEmbedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
-      } catch { /* ignore */ }
-    } else if (rawVideoUrl && rawVideoUrl.includes('youtu.be/')) {
-      const videoId = rawVideoUrl.split('youtu.be/')[1]?.split('?')[0]
-      if (videoId) videoEmbedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`
+    
+    if (rawVideoUrl) {
+      // Robust regex to extract exactly the 11-character YouTube video ID
+      const ytMatch = rawVideoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (ytMatch && ytMatch[1]) {
+        videoEmbedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
+      }
     }
 
     return {
@@ -459,8 +458,9 @@ export default function ProductDetailPage() {
                 <iframe
                   src={uiProduct.videoEmbedUrl}
                   title={`${uiProduct.name} Product Demo`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   className="absolute inset-0 w-full h-full"
                 />
               </div>

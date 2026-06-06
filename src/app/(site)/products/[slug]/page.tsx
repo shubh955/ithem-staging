@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import ProductDetailClient from './ProductDetailClient'
 import CategoryClient from './CategoryClient'
-import { SITE_CONFIG, PRODUCT_CATEGORIES } from '@/lib/utils/constants'
+import { SITE_CONFIG, PRODUCT_CATEGORIES, WOOCOMMERCE_CONFIG } from '@/lib/utils/constants'
 import { notFound } from 'next/navigation'
 
 const CATEGORY_MAP = Object.fromEntries(
@@ -24,22 +24,27 @@ export async function generateMetadata({
     }
   }
 
-  // Otherwise, it's a product
   const id = searchParams?.id as string | undefined;
   const productSlug = params.slug;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || SITE_CONFIG.url || 'http://localhost:3000';
+  const { baseUrl, consumerKey, consumerSecret } = WOOCOMMERCE_CONFIG;
   
   try {
+    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+    const headers = {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    };
+
     const productUrl = id
-      ? `${baseUrl}/api/products?id=${id}`
-      : `${baseUrl}/api/products?search=${encodeURIComponent(productSlug)}&per_page=1&page=1`;
+      ? `${baseUrl}/products/${id}`
+      : `${baseUrl}/products?search=${encodeURIComponent(productSlug)}&per_page=1&page=1`;
       
-    const res = await fetch(productUrl, { next: { revalidate: 3600 } });
+    const res = await fetch(productUrl, { headers, next: { revalidate: 3600 } });
     const data = await res.json();
     
     const product = id 
       ? data 
-      : (data.products && (data.products.find((p: any) => p.slug === productSlug) || data.products[0]));
+      : (Array.isArray(data) && (data.find((p: any) => p.slug === productSlug) || data[0]));
     
     if (product && product.name) {
       const plainDescription = (product.short_description || product.description || '')

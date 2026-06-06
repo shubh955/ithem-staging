@@ -8,13 +8,16 @@ import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants';
 const { baseUrl: API_URL, consumerKey: CK, consumerSecret: CS } = WOOCOMMERCE_CONFIG;
 
 export async function fetchWoo(endpoint: string, options: RequestInit = {}) {
-  // Construct the full URL with credentials as query parameters
-  const separator = endpoint.includes('?') ? '&' : '?';
-  const url = `${API_URL}${endpoint}${separator}consumer_key=${CK}&consumer_secret=${CS}`;
+  // Construct the full URL
+  const url = `${API_URL}${endpoint}`;
+  
+  // Use Basic Authentication as requested
+  const auth = Buffer.from(`${CK}:${CS}`).toString('base64');
 
   const response = await fetch(url, {
     ...options,
     headers: {
+      'Authorization': `Basic ${auth}`,
       'Content-Type': 'application/json',
       ...options.headers,
     },
