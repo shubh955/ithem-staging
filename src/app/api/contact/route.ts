@@ -11,7 +11,6 @@ const FROM_NAME = 'I-Therm Instruments'
 const ADMIN_RECIPIENTS = [
   { address: 'sales@itherm.co.in', name: 'I-Therm Sales' },
   { address: 'keval@itherm.co.in', name: 'I-Therm Sales' },
-  { address: 'shubhankar.m@weqtechnologies.com', name: 'I-Therm Sales' },
 ]
 
 // ─── reCAPTCHA Verification ───────────────────────────────────────────────────

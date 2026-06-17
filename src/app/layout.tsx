@@ -13,7 +13,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  referrer: 'strict-origin-when-cross-origin',
+  referrer: 'no-referrer',
   metadataBase: new URL(SITE_CONFIG.url),
   title: {
     default: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
