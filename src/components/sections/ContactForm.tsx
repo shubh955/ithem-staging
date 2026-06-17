@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import ReCAPTCHA from 'react-google-recaptcha'
 import { ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
@@ -16,13 +17,23 @@ export function ContactForm() {
   const [formState, setFormState] = useState<FormState>('idle')
   const [message, setMessage] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [recaptchaError, setRecaptchaError] = useState('')
   const formRef = useRef<HTMLFormElement>(null)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setFormState('submitting')
     setMessage('')
     setFieldErrors({})
+    setRecaptchaError('')
+
+    const recaptchaToken = recaptchaRef.current?.getValue()
+    if (!recaptchaToken) {
+      setRecaptchaError('Please complete the reCAPTCHA verification.')
+      setFormState('error')
+      return
+    }
 
     if (!formRef.current) return
     const fd = new FormData(formRef.current)
@@ -35,6 +46,7 @@ export function ContactForm() {
       inquiryType: getFormValue(fd, 'inquiryType'),
       message: getFormValue(fd, 'message'),
       _hp_field: getFormValue(fd, '_hp_field'),
+      recaptchaToken,
     }
 
     const nextFieldErrors: FieldErrors = {}
@@ -65,14 +77,17 @@ export function ContactForm() {
         setFieldErrors({})
         setMessage(data.message)
         formRef.current.reset()
+        recaptchaRef.current?.reset()
       } else {
         setFormState('error')
         setFieldErrors(data.fieldErrors || {})
         setMessage(data.message || 'Something went wrong.')
+        recaptchaRef.current?.reset()
       }
     } catch (error) {
       setFormState('error')
       setMessage('Failed to submit form. Please check your network connection.')
+      recaptchaRef.current?.reset()
     }
   }
 
@@ -130,6 +145,18 @@ export function ContactForm() {
           {fieldErrors.message && <p id="contact-message-error" className="text-xs font-medium text-red-600 ml-1">{fieldErrors.message}</p>}
         </div>
 
+        {/* reCAPTCHA v2 */}
+        <div className="space-y-1">
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            theme="light"
+          />
+          {recaptchaError && (
+            <p className="text-xs font-medium text-red-600 ml-1">{recaptchaError}</p>
+          )}
+        </div>
+
         {message && (
           <div className={`p-4 rounded-xl flex items-start gap-3 ${
             formState === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
@@ -143,7 +170,7 @@ export function ContactForm() {
           </div>
         )}
 
-        <button 
+        <button
           type="submit"
           disabled={formState === 'submitting'}
           className="btn-premium btn-orange-to-black group w-full rounded-xl py-4 text-sm font-bold shadow-lg shadow-brand-orange/20 flex items-center justify-center gap-2 disabled:opacity-70"

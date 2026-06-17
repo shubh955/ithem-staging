@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
+const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 const ZEPTO_URL = 'https://api.zeptomail.in/v1.1/email'
 const ZEPTO_TOKEN = 'Zoho-enczapikey PHtE6r0OQ+G/2mAq+hYE4/PsFcXwMd8mqLxveQJE49tDA/4LF00A/d99wGO/+hl+BqZFEKOazow5t+6au+KAIW7qNzlMWGqyqK3sx/VYSPOZsbq6x00ZsVwec0bbUIPmd9Bt1SHUudrSNA=='
 
@@ -11,6 +12,17 @@ const ADMIN_RECIPIENTS = [
   { address: 'sales@itherm.co.in', name: 'I-Therm Sales' },
   { address: 'keval@itherm.co.in', name: 'I-Therm Sales' },
 ]
+
+// ─── reCAPTCHA Verification ───────────────────────────────────────────────────
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  const res = await fetch(RECAPTCHA_VERIFY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+  })
+  const data = await res.json()
+  return data.success === true
+}
 
 // ─── Zod Schema ───────────────────────────────────────────────────────────────
 const trimmedString = z.preprocess(
@@ -82,6 +94,17 @@ async function sendZeptoMail({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+
+    // reCAPTCHA verification
+    const recaptchaToken = body.recaptchaToken
+    if (!recaptchaToken) {
+      return NextResponse.json({ success: false, message: 'reCAPTCHA verification required.' }, { status: 400 })
+    }
+    const isHuman = await verifyRecaptcha(recaptchaToken)
+    if (!isHuman) {
+      return NextResponse.json({ success: false, message: 'reCAPTCHA verification failed. Please try again.' }, { status: 400 })
+    }
+
     const data = schema.parse(body)
 
     // Honeypot validation (Bots usually fill hidden fields)
