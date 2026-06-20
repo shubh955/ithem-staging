@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants'
 
 const {
@@ -8,7 +9,7 @@ const {
 } = WOOCOMMERCE_CONFIG
 
 const PRODUCTS_URL = `${WOOCOMMERCE_URL_BASE}/products`
-const CACHE_SECONDS = 300
+const CACHE_SECONDS = 30
 
 export const dynamic = 'force-dynamic'
 
@@ -197,6 +198,18 @@ export async function GET(request: Request) {
     .filter(Boolean)
 
   try {
+    const bypass = searchParams.get('revalidate') === 'true' ||
+                   request.headers.get('cache-control') === 'no-cache' ||
+                   request.headers.get('pragma') === 'no-cache';
+
+    if (bypass) {
+      revalidateTag('wordpress')
+      revalidateTag('products')
+      if (id) {
+        revalidateTag(`product-${id}`)
+      }
+    }
+
     const headers = wooHeaders()
 
     if (id) {

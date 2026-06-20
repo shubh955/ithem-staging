@@ -22,7 +22,7 @@ export async function fetchWoo(endpoint: string, options: RequestInit = {}) {
       ...options.headers,
     },
     next: {
-      revalidate: 300,
+      revalidate: 30,
       tags: ['wordpress'],
       ...options.next,
     },

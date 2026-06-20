@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
   const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
   const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend.itherm.co.in/wp-json/wc/v3';
@@ -10,13 +13,23 @@ export async function GET() {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const bypass = searchParams.get('revalidate') === 'true' ||
+                   request.headers.get('cache-control') === 'no-cache' ||
+                   request.headers.get('pragma') === 'no-cache';
+
+    if (bypass) {
+      revalidateTag('wordpress');
+      revalidateTag('categories');
+    }
+
     const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
     const response = await fetch(`${API_URL}/products/categories?per_page=100&hide_empty=true`, {
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600, tags: ['wordpress', 'categories'] }
+      next: { revalidate: 30, tags: ['wordpress', 'categories'] }
     });
 
     if (!response.ok) {

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { WOOCOMMERCE_CONFIG } from '@/lib/utils/constants';
 
 export const dynamic = 'force-dynamic';
 
-const CACHE_SECONDS = 300;
+const CACHE_SECONDS = 30;
 
 const normalizeText = (value: string) => (value || '')
   .toLowerCase()
@@ -53,7 +54,7 @@ async function fetchWooCollection(apiUrl: string, endpoint: string, headers: Hea
   return items;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { baseUrl: API_URL, consumerKey: CONSUMER_KEY, consumerSecret: CONSUMER_SECRET } = WOOCOMMERCE_CONFIG;
 
   if (!CONSUMER_KEY || !CONSUMER_SECRET) {
@@ -61,6 +62,15 @@ export async function GET() {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const bypass = searchParams.get('revalidate') === 'true' ||
+                   request.headers.get('cache-control') === 'no-cache' ||
+                   request.headers.get('pragma') === 'no-cache';
+
+    if (bypass) {
+      revalidateTag('wordpress');
+      revalidateTag('attributes');
+    }
     const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
     const headers = {
       'Authorization': `Basic ${auth}`,

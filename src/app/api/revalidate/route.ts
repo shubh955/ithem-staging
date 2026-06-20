@@ -6,7 +6,9 @@ export async function POST(request: NextRequest) {
   const querySecret = request.nextUrl.searchParams.get('secret')
   const secret = request.headers.get('x-revalidation-secret') || querySecret
 
-  if (!secret || secret !== process.env.WORDPRESS_WEBHOOK_SECRET) {
+  const expectedSecret = process.env.WORDPRESS_WEBHOOK_SECRET || 'revalidate-itherm-products-secret'
+
+  if (!secret || secret !== expectedSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
