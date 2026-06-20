@@ -180,13 +180,32 @@ export default function ProductDetailPage() {
     const type = product.categories[0]?.name || ''
     const approvals = product.attributes.find(a => a.name.toLowerCase().includes('approval') || a.name.toLowerCase().includes('cert'))?.options || []
 
-    // Extract YouTube video URL from meta_data
-    const rawVideoUrl = product.meta_data?.find(m => m.key === '_video_url')?.value || ''
+    // Safely extract metadata value as a string
+    const getMetadataStringValue = (key: string): string => {
+      const meta = product.meta_data?.find(m => m.key === key);
+      if (!meta) return '';
+      const val = meta.value;
+      if (val === undefined || val === null) return '';
+      if (typeof val === 'string') return val;
+      if (Array.isArray(val)) {
+        const first = val[0];
+        if (first === undefined || first === null) return '';
+        return typeof first === 'string' ? first : String(first);
+      }
+      return String(val);
+    };
+
+    // Extract YouTube video URLs from meta_data
+    const nickxVideoUrl = getMetadataStringValue('_nickx_video_text_url');
+    const rawVideoUrl = getMetadataStringValue('_video_url');
+    
+    // Prioritize _nickx_video_text_url if it has a value, otherwise fall back to _video_url
+    const targetVideoUrl = nickxVideoUrl || rawVideoUrl;
     let videoEmbedUrl: string | null = null
     
-    if (rawVideoUrl) {
+    if (targetVideoUrl) {
       // Robust regex to extract exactly the 11-character YouTube video ID
-      const ytMatch = rawVideoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      const ytMatch = targetVideoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
       if (ytMatch && ytMatch[1]) {
         videoEmbedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
       }
