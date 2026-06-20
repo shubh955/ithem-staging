@@ -38,7 +38,7 @@ async function fetchWooCollection(apiUrl: string, endpoint: string, headers: Hea
     const separator = endpoint.includes('?') ? '&' : '?';
     const response = await fetch(`${apiUrl}${endpoint}${separator}per_page=100&page=${page}`, {
       headers,
-      next: { revalidate: CACHE_SECONDS },
+      next: { revalidate: CACHE_SECONDS, tags: ['wordpress', 'attributes'] },
     });
 
     if (!response.ok) break;

@@ -21,6 +21,11 @@ export async function fetchWoo(endpoint: string, options: RequestInit = {}) {
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    next: {
+      revalidate: 300,
+      tags: ['wordpress'],
+      ...options.next,
+    },
   });
 
   if (!response.ok) {

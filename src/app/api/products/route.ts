@@ -96,7 +96,7 @@ async function fetchWooCollection<T>(url: string, headers: HeadersInit) {
     const separator = url.includes('?') ? '&' : '?'
     const response = await fetch(`${url}${separator}per_page=100&page=${page}`, {
       headers,
-      next: { revalidate: CACHE_SECONDS },
+      next: { revalidate: CACHE_SECONDS, tags: ['wordpress', 'products'] },
     })
 
     if (!response.ok) break
@@ -202,7 +202,7 @@ export async function GET(request: Request) {
     if (id) {
       const response = await fetch(`${PRODUCTS_URL}/${id}`, {
         headers,
-        next: { revalidate: CACHE_SECONDS },
+        next: { revalidate: CACHE_SECONDS, tags: ['wordpress', 'products', `product-${id}`] },
       })
 
       if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)
@@ -250,7 +250,7 @@ export async function GET(request: Request) {
 
     const response = await fetch(`${PRODUCTS_URL}?${params}`, {
       headers,
-      next: { revalidate: CACHE_SECONDS },
+      next: { revalidate: CACHE_SECONDS, tags: ['wordpress', 'products'] },
     })
 
     if (!response.ok) throw new Error(`WooCommerce API Error: ${response.statusText}`)

@@ -16,7 +16,7 @@ export async function GET() {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600 }
+      next: { revalidate: 3600, tags: ['wordpress', 'categories'] }
     });
 
     if (!response.ok) {
